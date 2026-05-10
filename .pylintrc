@@ -1,0 +1,18 @@
+[tool.pylint.main]
+disable = [
+    "C0103",  # invalid-name
+    "R0913",  # too-many-arguments
+    "W0212",  # protected-access
+]
+
+max-locals=15
+max-attributes=10
+max-branches=12
+max-statements=50
+
+[tool.pylint.design]
+max-args=5
+max-arguments=5
+
+[tool.pylint.format]
+max-line-length=100

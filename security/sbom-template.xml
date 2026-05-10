@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<bom xmlns="http://cyclonedx.org/schema/bom/1.4" specVersion="1.4" serialNumber="urn:uuid:3e8234f7-f62c-45a9-b78e-12c3de51f4f1" version="1">
+  <metadata>
+    <timestamp>2024-04-11T00:00:00Z</timestamp>
+    <tools>
+      <tool>
+        <vendor>GitHub</vendor>
+        <name>CycloneDX npm</name>
+        <version>3.11.7</version>
+      </tool>
+    </tools>
+    <component type="application">
+      <name>devops-app</name>
+      <version>1.0.0</version>
+      <description>Aplicación DevOps - GitHub Actions + Terraform + Docker</description>
+      <licenses>
+        <license>
+          <name>MIT</name>
+        </license>
+      </licenses>
+    </component>
+  </metadata>
+  <components>
+    <component type="library">
+      <name>express</name>
+      <version>4.18.2</version>
+      <purl>pkg:npm/express@4.18.2</purl>
+    </component>
+    <component type="library">
+      <name>prom-client</name>
+      <version>14.2.0</version>
+      <purl>pkg:npm/prom-client@14.2.0</purl>
+    </component>
+    <component type="library">
+      <name>body-parser</name>
+      <version>1.20.2</version>
+      <purl>pkg:npm/body-parser@1.20.2</purl>
+    </component>
+  </components>
+</bom>

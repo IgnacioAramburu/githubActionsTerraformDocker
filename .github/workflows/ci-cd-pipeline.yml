@@ -1,0 +1,247 @@
+name: DevOps Pipeline - CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Job: Análisis estático y linting
+  lint-and-analyze:
+    name: Lint & Code Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: PyLint - Análisis de código
+        run: pylint src/server.py --disable=C0103,R0913 || true
+        continue-on-error: true
+
+      - name: Black - Verificar formato
+        run: black --check src/ || true
+        continue-on-error: true
+
+      - name: pip check - Auditoría de seguridad
+        run: pip check || true
+        continue-on-error: true
+
+  # Job: Testing y coverage
+  test:
+    name: Test & Coverage
+    runs-on: ubuntu-latest
+    needs: lint-and-analyze
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Ejecutar tests con pytest
+        run: pytest src/test_server.py -v --cov=src --cov-report=xml --cov-report=html
+
+      - name: Subir cobertura a Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          fail_ci_if_error: false
+
+      - name: Subir reporte HTML de cobertura
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: htmlcov/
+          if-no-files-found: ignore
+
+  # Job: Seguridad avanzada con Snyk
+  security:
+    name: Security Scanning (Snyk)
+    runs-on: ubuntu-latest
+    needs: lint-and-analyze
+    continue-on-error: true
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Ejecutar Snyk scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=package.json
+        continue-on-error: true
+
+  # Job: Generar SBOM
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    needs: lint-and-analyze
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Generar SBOM con pip-audit
+        run: pip install cyclonedx-bom && cyclonedx-bom -o json -o xml requirements.txt || true
+
+      - name: Generar lista de dependencias
+        run: pip freeze > dependencies.txt && pip install cyclonedx-python && cyclonedx-python -o xml -rf requirements.txt > sbom.xml || true
+
+      - name: Subir SBOM como artefacto
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom
+          path: |
+            sbom.xml
+            dependencies.txt
+          if-no-files-found: ignore
+
+  # Job: Build imagen Docker
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=python
+
+      - name: Build y push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+
+      - name: Scan imagen con Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:python
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+        continue-on-error: true
+
+      - name: Upload Trivy resultados
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Job: Despliegue local (simulado)
+  deploy:
+    name: Deploy (Local Simulation)
+    runs-on: ubuntu-latest
+    needs: build-docker
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Mostrar Docker images
+        run: docker images || echo "Docker no disponible en runner"
+
+      - name: Generar reporte de despliegue
+        run: |
+          echo "# Deployment Report" > deployment-report.md
+          echo "**Image**: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" >> deployment-report.md
+          echo "**Branch**: ${{ github.ref_name }}" >> deployment-report.md
+          echo "**Commit**: ${{ github.sha }}" >> deployment-report.md
+          echo "**Timestamp**: $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> deployment-report.md
+
+      - name: Subir reporte de despliegue
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-report
+          path: deployment-report.md
+
+  # Job: Resumen final
+  summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [lint-and-analyze, test, security, sbom, build-docker, deploy]
+    if: always()
+    
+    steps:
+      - name: Pipeline Status
+        run: |
+          echo "✅ Pipeline ejecutado"
+          echo "📊 Trabajos ejecutados: 6"
+          echo "🔗 Artifacts disponibles en: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Crear issue si hay fallo
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Pipeline failed on ${context.ref}`,
+              body: `Pipeline run #${context.runId} failed. Check details at ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+            })

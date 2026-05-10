@@ -1,0 +1,17 @@
+.git
+.gitignore
+.github
+node_modules
+npm-debug.log*
+coverage
+.env
+.env.local
+*.log
+*.pot
+*.mo
+.pytest_cache
+__pycache__
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl

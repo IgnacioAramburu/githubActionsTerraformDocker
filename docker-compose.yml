@@ -1,0 +1,74 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: devops-proy1-app
+    labels:
+      - group=devops-proy1
+      - component=application
+    ports:
+      - "3000:3000"
+    environment:
+      - ENV=production
+      - PORT=3000
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - devops-network
+    restart: unless-stopped
+    volumes:
+      - ./src:/app/src:ro
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: devops-proy1-prometheus
+    labels:
+      - group=devops-proy1
+      - component=monitoring
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - devops-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: devops-proy1-grafana
+    labels:
+      - group=devops-proy1
+      - component=visualization
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_SECURITY_ADMIN_USER=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana-provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - devops-network
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  devops-network:
+    driver: bridge

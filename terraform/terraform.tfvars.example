@@ -1,0 +1,2 @@
+# Override de variables - Personalizar según necesidad
+# terraform apply -var="host_port=3000" -var="prometheus_port=9090"

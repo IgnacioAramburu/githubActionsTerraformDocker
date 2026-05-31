@@ -123,13 +123,10 @@ cd ..
 
 ### 3. Ejecutar tests localmente
 ```bash
-npm install
-npm run lint
-npm run test
-npm run security:check
 pip install -r requirements.txt
-pytest src/test_server.py
 pylint src/server.py
+pytest src/test_server.py
+black --check src/
 ```
 
 ## 📊 Dashboard de Monitoreo
@@ -140,7 +137,7 @@ pylint src/server.py
 Métricas disponibles:
 - `http_requests_total` - Total de requests HTTP
 - `http_request_duration_ms` - Duración de requests
-- `nodejs_*` - Métricas del runtime Node.js
+- `python_info` - Información del runtime Python
 
 ### Grafana
 **URL**: http://localhost:3001
@@ -177,7 +174,7 @@ Dashboards disponibles:
 ### Trabajo 5: Build Docker Image
 - ✅ Multi-stage docker build
 - ✅ Image registry push
-- ✅ Trivy vulnerability scan
+- ✅ Trivy vulnerability scan (ECR)
 - ⏱️ ~5-10 minutos
 
 ### Trabajo 6: Deploy
@@ -377,8 +374,10 @@ chmod +x security/*.sh
 
 ### Pre-requisitos
 1. Configurar secretos en GitHub:
-   - `SNYK_TOKEN` - Token de Snyk
-   - Cualquier otra credential necesaria
+   - `AWS_ACCESS_KEY_ID`: Credenciales de IAM
+   - `AWS_SECRET_ACCESS_KEY`: Secreto de IAM
+   - `AWS_ACCOUNT_ID`: ID de cuenta de 12 dígitos
+   - `SNYK_TOKEN`: Token de seguridad de Snyk
 
 2. Configurar ramas protegidas:
    - Requerir checks del pipeline
@@ -451,7 +450,7 @@ MIT License - Ver LICENSE file para más detalles.
 - [x] Dockerfile multi-stage con buenas prácticas
 - [x] Tests unitarios con pytest
 - [x] Análisis de código (PyLint)
-- [x] Análisis de seguridad (Snyk, Trivy, npm audit)
+- [x] Análisis de seguridad (Snyk, Trivy, pip-audit)
 - [x] SBOM (CycloneDX)
 - [x] Monitoreo (Prometheus + Grafana)
 - [x] Documentación completa

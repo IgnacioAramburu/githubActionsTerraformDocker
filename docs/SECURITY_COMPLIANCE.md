@@ -35,9 +35,9 @@ pip install pip-audit && pip-audit -r requirements.txt
 
 **Gestión de falsos positivos**:
 ```bash
-# Crear .auditignore para ignorar CVEs específicas
-echo "1234567" >> .auditignore  # CVE ID
-npm audit --ignore 1234567
+# Para ignorar vulnerabilidades conocidas en pip-audit (si es necesario)
+# Se recomienda actualizar la dependencia, pero puede usarse --ignore-vuln
+pip-audit --ignore-vuln GHSA-xxxx-xxxx-xxxx -r requirements.txt
 ```
 
 ### 3. Snyk - Deep Security Analysis

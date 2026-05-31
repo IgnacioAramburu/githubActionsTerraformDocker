@@ -113,14 +113,19 @@ terraform validate
 
 Necesarios para el pipeline completo:
 
-1. **SNYK_TOKEN** (Recomendado)
-   ```bash
-   # En https://snyk.io → Account settings → Auth tokens
-   # Copiar token
-   ```
-   En GitHub → Settings → Secrets → New repository secret
-   - Name: SNYK_TOKEN
-   - Value: [tu token]
+Los secrets **NO** se ingresan en formato JSON. Se deben crear individualmente:
+
+| Nombre del Secret | Valor |
+| :--- | :--- |
+| `AWS_ACCESS_KEY_ID` | Tu Access Key de IAM (ej. AKIA...) |
+| `AWS_SECRET_ACCESS_KEY` | Tu Secret Key de IAM |
+| `AWS_ACCOUNT_ID` | Tu ID de cuenta de AWS (12 dígitos) |
+| `SNYK_TOKEN` | Token obtenido en Snyk.io |
+
+**Procedimiento**:
+1. GitHub → Settings → Secrets and variables → Actions.
+2. Click en **New repository secret** para cada una de las variables arriba mencionadas.
+3. En **Name** ingresa el nombre en mayúsculas y en **Secret** pega el valor como texto plano.
 
 2. **CODECOV_TOKEN** (Opcional)
    - Para mejor tracking de coverage

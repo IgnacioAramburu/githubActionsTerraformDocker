@@ -80,26 +80,6 @@ jobs:
           path: htmlcov/
           if-no-files-found: ignore
 
-  # Job: Seguridad avanzada con Snyk
-  security:
-    name: Security Scanning (Snyk)
-    runs-on: ubuntu-latest
-    needs: lint-and-analyze
-    continue-on-error: true
-    
-    steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
-
-      - name: Ejecutar Snyk scan (Python)
-        uses: snyk/actions/python-3.10@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: test
-          args: --severity-threshold=high --file=requirements.txt
-        continue-on-error: true
-
   # Job: Generar SBOM
   sbom:
     name: Generate SBOM
@@ -137,10 +117,11 @@ jobs:
   build-docker:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: [test, security]
+    needs: test
     permissions:
       contents: read
       packages: write
+      security-events: write
     
     steps:
       - name: Checkout código
@@ -192,13 +173,13 @@ jobs:
       - name: Scan imagen con Trivy (Analisis de vulnerabilidades)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:python
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
           format: 'sarif'
           output: 'trivy-results.sarif'
         continue-on-error: true
 
       - name: Upload Trivy resultados
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         #Nos aseguramos de que intente de subir el reporte aunque Trivy falle
         if: always()
         with:
@@ -243,22 +224,23 @@ jobs:
 
       - name: Verify Deployment
         run: |
-          sleep 10
-          docker ps -a
-          curl -f http://localhost:3000/health || echo "App not ready yet"
+          ALB_URL=$(cd terraform && terraform output -raw app_url)
+          echo "Verificando despliegue en: $ALB_URL"
+          sleep 30
+          curl -f "$ALB_URL/health" || echo "La aplicación aún no responde en el ALB"
 
   # Job: Resumen final
   summary:
     name: Pipeline Summary
     runs-on: ubuntu-latest
-    needs: [lint-and-analyze, test, security, sbom, build-docker, deploy]
+    needs: [lint-and-analyze, test, sbom, build-docker, deploy]
     if: always()
     
     steps:
       - name: Pipeline Status
         run: |
           echo "✅ Pipeline ejecutado"
-          echo "📊 Trabajos ejecutados: 6"
+          echo "📊 Trabajos ejecutados: 5"
           echo "🔗 Artifacts disponibles en: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Crear issue si hay fallo

@@ -1,7 +1,7 @@
 terraform {
   required_version = ">= 1.0"
   backend "s3" {
-    bucket = "nombre-de-tu-bucket-para-estado-tf" # Debes crearlo manualmente una vez
+    bucket = "devops-app-terraform-state-1780247597"
     key    = "devops-app/terraform.tfstate"
     region = "us-east-1"
   }

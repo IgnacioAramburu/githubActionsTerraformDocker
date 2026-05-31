@@ -19,15 +19,12 @@ Problemas que detecta:
 - Comparaciones sospechosas
 - Prácticas inseguras
 
-### 2. npm audit - Auditoría de Dependencias
+### 2. pip check & pip-audit - Auditoría de Dependencias
 
 **Ejecutar**:
 ```bash
-npm audit                  # Mostrar vulnerabilidades
-npm audit --json          # Formato JSON
-npm audit --audit-level=moderate  # Threshold específico
-npm audit fix              # Auto-fix vulnerable deps
-npm audit fix --force      # Forza actualización mayor
+pip check
+pip install pip-audit && pip-audit -r requirements.txt
 ```
 
 **Niveles**:

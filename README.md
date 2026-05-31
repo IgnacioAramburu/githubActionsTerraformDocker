@@ -449,8 +449,8 @@ MIT License - Ver LICENSE file para más detalles.
 - [x] Workflow .yml de GitHub Actions
 - [x] Archivos Terraform para infraestructura
 - [x] Dockerfile multi-stage con buenas prácticas
-- [x] Tests unitarios con Jest
-- [x] Análisis de código (ESLint)
+- [x] Tests unitarios con pytest
+- [x] Análisis de código (PyLint)
 - [x] Análisis de seguridad (Snyk, Trivy, npm audit)
 - [x] SBOM (CycloneDX)
 - [x] Monitoreo (Prometheus + Grafana)

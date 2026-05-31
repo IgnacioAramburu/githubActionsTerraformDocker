@@ -47,8 +47,7 @@ variable "environment" {
   default     = "production"
 }
 
-data "aws_availability_zones" "available" {
-}
+data "aws_availability_zones" "available" {}
 
 # Red Básica (VPC y Subnets)
 resource "aws_vpc" "main" {
@@ -216,8 +215,8 @@ resource "aws_security_group" "lb" {
 
 # Grupo de Seguridad para las tareas de ECS
 resource "aws_security_group" "ecs_tasks" {
-  name        = "${var.app_name}-tasks-sg"
-  vpc_id      = aws_vpc.main.id
+  name   = "${var.app_name}-tasks-sg"
+  vpc_id = aws_vpc.main.id
 
   ingress {
     protocol        = "tcp"

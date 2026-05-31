@@ -47,11 +47,17 @@ variable "environment" {
   default     = "production"
 }
 
+data "aws_availability_zones" "available" {
+}
+
 # Red Básica (VPC y Subnets)
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
-  tags = { Name = "${var.app_name}-vpc" }
+
+  tags = {
+    Name = "${var.app_name}-vpc"
+  }
 }
 
 resource "aws_subnet" "public" {
@@ -68,6 +74,7 @@ resource "aws_internet_gateway" "gw" {
 
 resource "aws_route_table" "rt" {
   vpc_id = aws_vpc.main.id
+
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.gw.id
@@ -94,17 +101,21 @@ resource "aws_ecs_task_definition" "app" {
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
-  container_definitions = jsonencode([{
-    name  = var.app_name
-    image = var.docker_image_name
-    portMappings = [{
-      containerPort = var.container_port
-      hostPort      = var.container_port
-    }]
-    environment = [
-      { name = "ENV", value = var.environment }
-    ]
-  }])
+  container_definitions = jsonencode([
+    {
+      name  = var.app_name
+      image = var.docker_image_name
+      portMappings = [
+        {
+          containerPort = var.container_port
+          hostPort      = var.container_port
+        }
+      ]
+      environment = [
+        { name = "ENV", value = var.environment }
+      ]
+    }
+  ])
 }
 
 # Load Balancer (ALB)
@@ -122,6 +133,7 @@ resource "aws_lb_target_group" "app" {
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
   target_type = "ip"
+
   health_check {
     path = "/health"
   }
@@ -131,6 +143,7 @@ resource "aws_lb_listener" "front_end" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
   protocol          = "HTTP"
+
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app.arn
@@ -183,8 +196,8 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
 
 # Grupo de Seguridad para el Load Balancer
 resource "aws_security_group" "lb" {
-  name        = "${var.app_name}-lb-sg"
-  vpc_id      = aws_vpc.main.id
+  name   = "${var.app_name}-lb-sg"
+  vpc_id = aws_vpc.main.id
 
   ingress {
     protocol    = "tcp"
@@ -221,10 +234,7 @@ resource "aws_security_group" "ecs_tasks" {
   }
 }
 
-# Datasources
-data "aws_availability_zones" "available" {}
-
-# Outputs Actualizados
+# Outputs
 output "app_url" {
   description = "URL de la API (Load Balancer DNS)"
   value       = "http://${aws_lb.main.dns_name}"

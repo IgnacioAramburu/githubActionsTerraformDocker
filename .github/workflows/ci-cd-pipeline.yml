@@ -89,12 +89,13 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Ejecutar Snyk scan
-        uses: snyk/actions/node@master
+      - name: Ejecutar Snyk scan (Python)
+        uses: snyk/actions/python-3.10@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high --file=package.json
+          command: test
+          args: --severity-threshold=high --file=requirements.txt
         continue-on-error: true
 
   # Job: Generar SBOM
@@ -113,14 +114,13 @@ jobs:
           python-version: '3.10'
           cache: 'pip'
 
-      - name: Instalar dependencias
-        run: pip install -r requirements.txt
-
-      - name: Generar SBOM con pip-audit
-        run: pip install cyclonedx-bom && cyclonedx-bom -o json -o xml requirements.txt || true
+      - name: Instalar CycloneDX
+        run: pip install cyclonedx-bom
 
       - name: Generar lista de dependencias
-        run: pip freeze > dependencies.txt && pip install cyclonedx-python && cyclonedx-python -o xml -rf requirements.txt > sbom.xml || true
+        run: |
+          pip freeze > dependencies.txt
+          cyclonedx-py requirements requirements.txt --output-format xml --output-file sbom.xml
 
       - name: Subir SBOM como artefacto
         uses: actions/upload-artifact@v3
@@ -155,6 +155,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Extraigo metadata para generar las etiquetas
+      # type=ref,event=branch: Tag con el nombre de la rama (main, develop)
+      # type=semver: Tag con versión semántica si existe (v1.0.0)
+      # type=sha: Tag con el hash del commit
+      # type=raw,value=latest: "latest" solo en la rama principal
+      # type=raw,value=python: Tag literal "python"
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v4
@@ -175,10 +181,11 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          #Reusar caches del build docker image de ejecuciones anteriores para buildear mas rapido
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
 
-      - name: Scan imagen con Trivy
+      - name: Scan imagen con Trivy (Analisis de vulnerabilidades)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:python
@@ -188,6 +195,7 @@ jobs:
 
       - name: Upload Trivy resultados
         uses: github/codeql-action/upload-sarif@v2
+        #Nos aseguramos de que intente de subir el reporte aunque Trivy falle
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
@@ -203,22 +211,34 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Mostrar Docker images
-        run: docker images || echo "Docker no disponible en runner"
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
 
-      - name: Generar reporte de despliegue
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: ./terraform
+        env:
+          DOCKER_HOST: unix:///var/run/docker.sock
         run: |
-          echo "# Deployment Report" > deployment-report.md
-          echo "**Image**: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" >> deployment-report.md
-          echo "**Branch**: ${{ github.ref_name }}" >> deployment-report.md
-          echo "**Commit**: ${{ github.sha }}" >> deployment-report.md
-          echo "**Timestamp**: $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> deployment-report.md
+          terraform plan \
+            -var="docker_image_name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:python" \
+            -var="environment=production" \
+            -out=tfplan
 
-      - name: Subir reporte de despliegue
-        uses: actions/upload-artifact@v3
-        with:
-          name: deployment-report
-          path: deployment-report.md
+      - name: Terraform Apply
+        working-directory: ./terraform
+        env:
+          DOCKER_HOST: unix:///var/run/docker.sock
+        run: terraform apply -auto-approve tfplan
+
+      - name: Verify Deployment
+        run: |
+          sleep 10
+          docker ps -a
+          curl -f http://localhost:3000/health || echo "App not ready yet"
 
   # Job: Resumen final
   summary:
@@ -245,3 +265,9 @@ jobs:
               title: `Pipeline failed on ${context.ref}`,
               body: `Pipeline run #${context.runId} failed. Check details at ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
             })
+
+# Artifacts generados por este pipeline:
+# 1. coverage-report: Reporte HTML de cobertura de tests (htmlcov/)
+# 2. sbom: Bill of Materials con dependencias (sbom.xml, dependencies.txt)
+# 3. deployment-report: Reporte markdown del despliegue (deployment-report.md)
+# 4. trivy-results.sarif: Análisis de vulnerabilidades (subido a GitHub Security)

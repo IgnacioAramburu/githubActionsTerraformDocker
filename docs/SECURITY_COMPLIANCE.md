@@ -2,25 +2,14 @@
 
 ## Análisis de Seguridad
 
-### 1. ESLint - Análisis Estático
+### 1. PyLint & Black - Análisis Estático
 
-**Configuración**: `.eslintrc.json`
+**Herramientas**: `pylint` para lógica y `black` para formato.
 
-```json
-{
-  "extends": "eslint:recommended",
-  "rules": {
-    "no-console": "off",
-    "no-unused-vars": "warn",
-    "semi": ["error", "always"]
-  }
-}
-```
-
-Ejecutar:
+**Ejecutar**:
 ```bash
-npm run lint       # Check
-npm run lint:fix   # Auto-fix
+pylint src/server.py
+black --check src/
 ```
 
 Problemas que detecta:

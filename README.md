@@ -127,6 +127,9 @@ npm install
 npm run lint
 npm run test
 npm run security:check
+pip install -r requirements.txt
+pytest src/test_server.py
+pylint src/server.py
 ```
 
 ## 📊 Dashboard de Monitoreo
@@ -151,12 +154,12 @@ Dashboards disponibles:
 ## 🔄 CI/CD Pipeline
 
 ### Trabajo 1: Lint & Code Analysis
-- ✅ ESLint analysis
-- ✅ npm audit check
+- ✅ PyLint analysis
+- ✅ pip check (Security)
 - ⏱️ ~2 minutos
 
 ### Trabajo 2: Test & Coverage
-- ✅ Unit tests con Jest
+- ✅ Unit tests con pytest
 - ✅ Coverage reporting
 - ✅ Codecov integration
 - ⏱️ ~3 minutos
@@ -187,13 +190,13 @@ Dashboards disponibles:
 ### Controles Implementados
 
 1. **Análisis Estático de Código**
-   - ESLint: Validación de estándares JS
-   - Ubicación: `.eslintrc.json`
+   - PyLint: Validación de estándares Python
+   - Ubicación: `.pylintrc`
 
 2. **Auditoría de Dependencias**
-   - npm audit: Detección de vulnerabilidades
+   - pip check: Verificación de paquetes
    - Snyk: Deep security analysis
-   - Variable de entorno: `SNYK_TOKEN`
+   - Escaneo de requirements.txt
 
 3. **Software Bill of Materials (SBOM)**
    - Formato: CycloneDX XML

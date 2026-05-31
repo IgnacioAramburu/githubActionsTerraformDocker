@@ -1,15 +1,20 @@
 terraform {
   required_version = ">= 1.0"
+  backend "s3" {
+    bucket = "nombre-de-tu-bucket-para-estado-tf" # Debes crearlo manualmente una vez
+    key    = "devops-app/terraform.tfstate"
+    region = "us-east-1"
+  }
   required_providers {
-    docker = {
-      source  = "kreuzwerker/docker"
-      version = "~> 3.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
     }
   }
 }
 
-provider "docker" {
-  # Configuración automática desde variable de entorno DOCKER_HOST
+provider "aws" {
+  region = var.aws_region
 }
 
 variable "app_name" {
@@ -18,20 +23,20 @@ variable "app_name" {
   default     = "devops-app"
 }
 
-variable "docker_image_name" {
-  description = "Nombre de la imagen Docker"
+variable "aws_region" {
+  description = "Región de AWS"
   type        = string
-  default     = "devops-app:latest"
+  default     = "us-east-1"
+}
+
+variable "docker_image_name" {
+  description = "URI de la imagen en ECR"
+  type        = string
+  default     = ""
 }
 
 variable "container_port" {
   description = "Puerto en el contenedor"
-  type        = number
-  default     = 3000
-}
-
-variable "host_port" {
-  description = "Puerto en el host"
   type        = number
   default     = 3000
 }
@@ -42,206 +47,185 @@ variable "environment" {
   default     = "production"
 }
 
-variable "prometheus_port" {
-  description = "Puerto para Prometheus"
-  type        = number
-  default     = 9090
+# Red Básica (VPC y Subnets)
+resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+  tags = { Name = "${var.app_name}-vpc" }
 }
 
-variable "grafana_port" {
-  description = "Puerto para Grafana"
-  type        = number
-  default     = 3001
+resource "aws_subnet" "public" {
+  count                   = 2
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.${count.index}.0/24"
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
+  map_public_ip_on_launch = true
 }
 
-# Network
-resource "docker_network" "devops_network" {
-  name   = "${var.app_name}-network"
-  driver = "bridge"
-
-  tags {
-    env = var.environment
-  }
+resource "aws_internet_gateway" "gw" {
+  vpc_id = aws_vpc.main.id
 }
 
-# Imagen Docker - Build local
-resource "docker_image" "devops_app" {
-  name = var.docker_image_name
-
-  build {
-    context      = "${path.root}/.."
-    dockerfile   = "docker/Dockerfile"
-    target       = ""
-    build_args = {
-      NODE_ENV = var.environment
-    }
-  }
-
-  triggers = {
-    dir_sha1 = filebase64sha256("${path.root}/../src/")
+resource "aws_route_table" "rt" {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.gw.id
   }
 }
 
-# Contenedor de la aplicación
-resource "docker_container" "devops_app" {
-  name  = "${var.app_name}-container"
-  image = docker_image.devops_app.image_id
-
-  ports {
-    internal = var.container_port
-    external = var.host_port
-  }
-
-  env = [
-    "NODE_ENV=${var.environment}",
-    "PORT=${var.container_port}"
-  ]
-
-  networks_advanced {
-    name = docker_network.devops_network.name
-  }
-
-  healthcheck {
-    test     = ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:${var.container_port}/health"]
-    interval = "30s"
-    timeout  = "10s"
-    retries  = 3
-  }
-
-  restart_policy {
-    condition = "unless-stopped"
-  }
-
-  tags {
-    env = var.environment
-  }
-
-  depends_on = [docker_image.devops_app]
+resource "aws_route_table_association" "a" {
+  count          = 2
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.rt.id
 }
 
-# Imagen Prometheus
-resource "docker_image" "prometheus" {
-  name = "prom/prometheus:latest"
-  keep_locally = true
+# ECS Cluster
+resource "aws_ecs_cluster" "main" {
+  name = "${var.app_name}-cluster"
 }
 
-# Contenedor Prometheus
-resource "docker_container" "prometheus" {
-  name  = "${var.app_name}-prometheus"
-  image = docker_image.prometheus.image_id
+# Definición de Tarea (Task Definition)
+resource "aws_ecs_task_definition" "app" {
+  family                   = var.app_name
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
-  ports {
-    internal = 9090
-    external = var.prometheus_port
-  }
-
-  mounts {
-    type      = "bind"
-    source    = "${path.root}/../monitoring/prometheus.yml"
-    target    = "/etc/prometheus/prometheus.yml"
-    read_only = true
-  }
-
-  mounts {
-    type   = "volume"
-    source = docker_volume.prometheus_data.name
-    target = "/prometheus"
-  }
-
-  cmd = [
-    "--config.file=/etc/prometheus/prometheus.yml",
-    "--storage.tsdb.path=/prometheus"
-  ]
-
-  networks_advanced {
-    name = docker_network.devops_network.name
-  }
-
-  restart_policy {
-    condition = "unless-stopped"
-  }
-
-  depends_on = [docker_image.prometheus]
+  container_definitions = jsonencode([{
+    name  = var.app_name
+    image = var.docker_image_name
+    portMappings = [{
+      containerPort = var.container_port
+      hostPort      = var.container_port
+    }]
+    environment = [
+      { name = "ENV", value = var.environment }
+    ]
+  }])
 }
 
-# Volume para Prometheus
-resource "docker_volume" "prometheus_data" {
-  name = "${var.app_name}-prometheus-data"
+# Load Balancer (ALB)
+resource "aws_lb" "main" {
+  name               = "${var.app_name}-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.lb.id]
+  subnets            = aws_subnet.public[*].id
 }
 
-# Imagen Grafana
-resource "docker_image" "grafana" {
-  name = "grafana/grafana:latest"
-  keep_locally = true
+resource "aws_lb_target_group" "app" {
+  name        = "${var.app_name}-tg"
+  port        = var.container_port
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+  health_check {
+    path = "/health"
+  }
 }
 
-# Contenedor Grafana
-resource "docker_container" "grafana" {
-  name  = "${var.app_name}-grafana"
-  image = docker_image.grafana.image_id
-
-  ports {
-    internal = 3000
-    external = var.grafana_port
+resource "aws_lb_listener" "front_end" {
+  load_balancer_arn = aws_lb.main.arn
+  port              = "80"
+  protocol          = "HTTP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app.arn
   }
-
-  env = [
-    "GF_SECURITY_ADMIN_PASSWORD=admin123",
-    "GF_SECURITY_ADMIN_USER=admin",
-    "GF_INSTALL_PLUGINS=alexanderzobnin-zabbix-app"
-  ]
-
-  mounts {
-    type   = "volume"
-    source = docker_volume.grafana_data.name
-    target = "/var/lib/grafana"
-  }
-
-  mounts {
-    type      = "bind"
-    source    = "${path.root}/../monitoring/grafana-provisioning"
-    target    = "/etc/grafana/provisioning"
-    read_only = true
-  }
-
-  networks_advanced {
-    name = docker_network.devops_network.name
-  }
-
-  restart_policy {
-    condition = "unless-stopped"
-  }
-
-  depends_on = [docker_container.prometheus, docker_image.grafana]
 }
 
-# Volume para Grafana
-resource "docker_volume" "grafana_data" {
-  name = "${var.app_name}-grafana-data"
+# ECS Service
+resource "aws_ecs_service" "main" {
+  name            = var.app_name
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.app.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    subnets          = aws_subnet.public[*].id
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.app.arn
+    container_name   = var.app_name
+    container_port   = var.container_port
+  }
 }
 
-# Outputs
+# IAM Role para la ejecución de tareas de ECS
+resource "aws_iam_role" "ecs_task_execution_role" {
+  name = "${var.app_name}-execution-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+# Grupo de Seguridad para el Load Balancer
+resource "aws_security_group" "lb" {
+  name        = "${var.app_name}-lb-sg"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 80
+    to_port     = 80
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    protocol    = "tcp"
+    from_port   = var.container_port
+    to_port     = var.container_port
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# Grupo de Seguridad para las tareas de ECS
+resource "aws_security_group" "ecs_tasks" {
+  name        = "${var.app_name}-tasks-sg"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    protocol        = "tcp"
+    from_port       = var.container_port
+    to_port         = var.container_port
+    security_groups = [aws_security_group.lb.id]
+  }
+
+  egress {
+    protocol    = "-1"
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# Datasources
+data "aws_availability_zones" "available" {}
+
+# Outputs Actualizados
 output "app_url" {
-  description = "URL de la aplicación"
-  value       = "http://localhost:${var.host_port}"
-}
-
-output "prometheus_url" {
-  description = "URL de Prometheus"
-  value       = "http://localhost:${var.prometheus_port}"
-}
-
-output "grafana_url" {
-  description = "URL de Grafana (usuario: admin, contraseña: admin123)"
-  value       = "http://localhost:${var.grafana_port}"
-}
-
-output "container_id" {
-  description = "ID del contenedor de la aplicación"
-  value       = docker_container.devops_app.id
-}
-
-output "image_id" {
-  description = "ID de la imagen Docker"
-  value       = docker_image.devops_app.image_id
+  description = "URL de la API (Load Balancer DNS)"
+  value       = "http://${aws_lb.main.dns_name}"
 }

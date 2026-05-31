@@ -15,7 +15,7 @@ COPY pyproject.toml .
 
 # Instalar dependencias Python
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir pytest pytest-asyncio pylint black
+    pip install --no-cache-dir pytest pytest-asyncio pytest-cov pylint black
 
 # Copiar código fuente
 COPY src/ ./src/

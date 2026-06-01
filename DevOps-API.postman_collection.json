@@ -1,0 +1,117 @@
+{
+  "info": {
+    "_postman_id": "devops-app-api-collection",
+    "name": "DevOps App API",
+    "description": "Collection for DevOps App running on AWS ECS with ALB",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        },
+        "description": "Check if the API is healthy and running"
+      },
+      "response": []
+    },
+    {
+      "name": "Get Metrics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/metrics",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "metrics"
+          ]
+        },
+        "description": "Get Prometheus metrics"
+      },
+      "response": []
+    },
+    {
+      "name": "Get API Info",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/info",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "info"
+          ]
+        },
+        "description": "Get information about the API"
+      },
+      "response": []
+    },
+    {
+      "name": "Echo Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"Hola desde Postman\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/echo",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "echo"
+          ]
+        },
+        "description": "Echo back a message"
+      },
+      "response": []
+    },
+    {
+      "name": "Service Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/service-status",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "service-status"
+          ]
+        },
+        "description": "Get the service status"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://devops-app-alb-1530031189.us-east-1.elb.amazonaws.com",
+      "type": "string"
+    }
+  ]
+}

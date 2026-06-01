@@ -300,7 +300,7 @@ resource "aws_ecs_service" "grafana" {
 
 # IAM Role para la ejecución de tareas de ECS
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "${var.app_name}-execution-role"
+  name               = "${var.app_name}-execution-role"
 
   assume_role_policy = jsonencode({
     Version   = "2012-10-17"

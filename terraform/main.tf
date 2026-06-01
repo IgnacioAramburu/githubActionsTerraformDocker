@@ -67,6 +67,19 @@ variable "grafana_port" {
 
 data "aws_availability_zones" "available" {}
 
+# Repositorios ECR (Requeridos para el push de imágenes)
+resource "aws_ecr_repository" "app" {
+  name                 = var.app_name
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true # Permite borrar el repositorio aunque tenga imágenes al hacer destroy
+}
+
+resource "aws_ecr_repository" "grafana" {
+  name                 = "devops-grafana"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+}
+
 # Red Básica (VPC y Subnets)
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"

@@ -57,7 +57,7 @@ async def metrics_middleware(request, call_next):
         response = await call_next(request)
         status_code = response.status_code
     except Exception as e:
-        logger.error("Error procesando request: %s", str(e))
+        logger.error("Error procesando request: %s", e)
         status_code = 500
         raise
 
@@ -112,6 +112,7 @@ async def metrics():
 
 
 @app.get("/api/info")
+@app.get("/info")
 async def info():
     """Información de la aplicación y sistema"""
     return {

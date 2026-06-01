@@ -29,6 +29,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "aws_account_id" {
+  description = "ID de la cuenta de AWS"
+  type        = string
+  sensitive   = true
+}
+
 variable "docker_image_name" {
   description = "URI de la imagen en ECR"
   type        = string
@@ -156,7 +162,7 @@ resource "aws_ecs_task_definition" "grafana" {
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   container_definitions = jsonencode([{
     name  = "grafana"
-    image = "grafana/grafana:latest"
+    image = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/devops-grafana:latest"
     portMappings = [{
       containerPort = 3000
       hostPort      = 3000

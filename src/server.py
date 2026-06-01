@@ -121,7 +121,10 @@ async def info():
     return {
         "app": "DevOps Pipeline",
         "environment": os.getenv("ENV", "development"),
-        "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+        "python_version": (
+            f"{sys.version_info.major}.{sys.version_info.minor}."
+            f"{sys.version_info.micro}"
+        ),
         "timestamp": datetime.utcnow().isoformat()
     }
 

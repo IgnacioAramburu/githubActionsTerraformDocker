@@ -1,5 +1,5 @@
 [MESSAGES CONTROL]
-disable=C0103,R0913,W0212,C0303
+disable=C0103,R0913,W0212,C0303,redefined-outer-name,too-few-public-methods
 
 [DESIGN]
 max-locals=15

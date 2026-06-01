@@ -135,7 +135,7 @@ resource "aws_ecs_task_definition" "app" {
   cpu                      = "256"
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  container_definitions    = jsonencode([
+  container_definitions = jsonencode([
     {
       name  = var.app_name
       image = var.docker_image_name
@@ -160,7 +160,7 @@ resource "aws_ecs_task_definition" "prometheus" {
   cpu                      = "256"
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  container_definitions    = jsonencode([{
+  container_definitions = jsonencode([{
     name  = "prometheus"
     image = "prom/prometheus:latest"
     portMappings = [{
@@ -178,9 +178,9 @@ resource "aws_ecs_task_definition" "grafana" {
   cpu                      = "256"
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  container_definitions    = jsonencode([{
-    name         = "grafana"
-    image        = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/devops-grafana:latest"
+  container_definitions = jsonencode([{
+    name  = "grafana"
+    image = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/devops-grafana:latest"
     portMappings = [{
       containerPort = 3000
       hostPort      = 3000
@@ -188,6 +188,7 @@ resource "aws_ecs_task_definition" "grafana" {
     environment = [{ name = "GF_SECURITY_ADMIN_PASSWORD", value = "admin123" }]
   }])
 }
+
 # Load Balancer (ALB)
 resource "aws_lb" "main" {
   name               = "${var.app_name}-alb"
@@ -215,6 +216,7 @@ resource "aws_lb_target_group" "prometheus" {
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
   target_type = "ip"
+
   health_check {
     path = "/-/healthy"
   }
@@ -226,6 +228,7 @@ resource "aws_lb_target_group" "grafana" {
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
   target_type = "ip"
+
   health_check {
     path = "/api/health"
   }
@@ -293,6 +296,7 @@ resource "aws_ecs_service" "prometheus" {
   desired_count                     = 1
   launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 60
+
   network_configuration {
     security_groups  = [aws_security_group.ecs_tasks.id]
     subnets          = aws_subnet.public[*].id

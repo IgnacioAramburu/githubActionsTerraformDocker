@@ -404,6 +404,15 @@ resource "aws_security_group" "ecs_tasks" {
     security_groups = [aws_security_group.lb.id]
   }
 
+  # Permitir comunicación interna entre tareas (necesario para Scraping y Data Sources)
+  ingress {
+    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 65535
+    self        = true
+    description = "Allow internal traffic between ECS tasks"
+  }
+
   egress {
     protocol    = "-1"
     from_port   = 0

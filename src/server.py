@@ -74,9 +74,7 @@ async def metrics_middleware(request, call_next):
     ).observe(process_time)
 
     # Log request details
-    logger.info(
-        "%s %s - %d - %.2fms", request.method, request.url.path, status_code, process_time
-    )
+    logger.info("%s %s - %d - %.2fms", request.method, request.url.path, status_code, process_time)
 
     return response
 
@@ -117,8 +115,7 @@ async def info():
         "app": "DevOps Pipeline",
         "environment": os.getenv("ENV", "development"),
         "python_version": (
-            f"{sys.version_info.major}.{sys.version_info.minor}."
-            f"{sys.version_info.micro}"
+            f"{sys.version_info.major}.{sys.version_info.minor}." f"{sys.version_info.micro}"
         ),
         "timestamp": datetime.utcnow().isoformat(),
     }
@@ -129,7 +126,7 @@ async def echo(data: dict):
     """Echo endpoint - Retorna los datos recibidos"""
     if not data:
         raise HTTPException(status_code=400, detail="Empty body")
-    
+
     return {
         "received": data,
         "timestamp": datetime.utcnow().isoformat(),
@@ -140,12 +137,11 @@ async def echo(data: dict):
 async def service_status(service: str):
     """Status de un servicio específico"""
     valid_services = ["app", "prometheus", "grafana"]
-    
+
     if service not in valid_services:
-        error_detail = f"Servicio '{service}' no válido. "
-        error_detail += f"Opciones: {valid_services}"
+        error_detail = f"Servicio '{service}' no válido. " f"Opciones: {valid_services}"
         raise HTTPException(status_code=400, detail=error_detail)
-    
+
     return {
         "service": service,
         "status": "operational",
@@ -165,9 +161,7 @@ async def http_exception_handler(_request, exc):
 async def general_exception_handler(_request, exc):
     """Manejador general de excepciones"""
     logger.error("General Exception: %s", str(exc), exc_info=True)
-    return JSONResponse(
-        status_code=500, content={"error": "Internal Server Error"}
-    )
+    return JSONResponse(status_code=500, content={"error": "Internal Server Error"})
 
 
 # Startup events
@@ -187,13 +181,8 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     port = int(os.getenv("PORT", "3000"))
     host = os.getenv("HOST", "0.0.0.0")
 
-    uvicorn.run(
-        app,
-        host=host,
-        port=port,
-        log_level="info"
-    )
+    uvicorn.run(app, host=host, port=port, log_level="info")

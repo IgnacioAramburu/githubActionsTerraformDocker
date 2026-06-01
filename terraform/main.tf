@@ -135,7 +135,7 @@ resource "aws_ecs_task_definition" "app" {
   cpu                      = "256"
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  container_definitions = jsonencode([
+  container_definitions    = jsonencode([
     {
       name  = var.app_name
       image = var.docker_image_name
@@ -160,7 +160,7 @@ resource "aws_ecs_task_definition" "prometheus" {
   cpu                      = "256"
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  container_definitions = jsonencode([{
+  container_definitions    = jsonencode([{
     name  = "prometheus"
     image = "prom/prometheus:latest"
     portMappings = [{
@@ -178,9 +178,9 @@ resource "aws_ecs_task_definition" "grafana" {
   cpu                      = "256"
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  container_definitions = jsonencode([{
-    name  = "grafana"
-    image = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/devops-grafana:latest"
+  container_definitions    = jsonencode([{
+    name         = "grafana"
+    image        = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/devops-grafana:latest"
     portMappings = [{
       containerPort = 3000
       hostPort      = 3000
@@ -266,11 +266,11 @@ resource "aws_lb_listener" "grafana" {
 
 # ECS Service
 resource "aws_ecs_service" "main" {
-  name            = var.app_name
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.app.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
+  name                              = var.app_name
+  cluster                           = aws_ecs_cluster.main.id
+  task_definition                   = aws_ecs_task_definition.app.arn
+  desired_count                     = 1
+  launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 60
 
   network_configuration {
@@ -287,11 +287,11 @@ resource "aws_ecs_service" "main" {
 }
 
 resource "aws_ecs_service" "prometheus" {
-  name            = "prometheus"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.prometheus.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
+  name                              = "prometheus"
+  cluster                           = aws_ecs_cluster.main.id
+  task_definition                   = aws_ecs_task_definition.prometheus.arn
+  desired_count                     = 1
+  launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 60
   network_configuration {
     security_groups  = [aws_security_group.ecs_tasks.id]
@@ -306,11 +306,11 @@ resource "aws_ecs_service" "prometheus" {
 }
 
 resource "aws_ecs_service" "grafana" {
-  name            = "grafana"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.grafana.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
+  name                              = "grafana"
+  cluster                           = aws_ecs_cluster.main.id
+  task_definition                   = aws_ecs_task_definition.grafana.arn
+  desired_count                     = 1
+  launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 60
   network_configuration {
     security_groups  = [aws_security_group.ecs_tasks.id]

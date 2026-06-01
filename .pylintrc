@@ -7,7 +7,6 @@ max-attributes=10
 max-branches=12
 max-statements=50
 max-args=5
-max-arguments=5
 
-[tool.pylint.format]
+[FORMAT]
 max-line-length=100

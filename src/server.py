@@ -141,7 +141,10 @@ async def service_status(service: str):
     valid_services = ["app", "prometheus", "grafana"]
     
     if service not in valid_services:
-        error_detail = f"Servicio '{service}' no válido. Opciones: {valid_services}"
+        error_detail = (
+            f"Servicio '{service}' no válido. "
+            f"Opciones: {valid_services}"
+        )
         raise HTTPException(status_code=400, detail=error_detail)
     
     return {

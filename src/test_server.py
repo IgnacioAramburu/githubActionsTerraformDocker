@@ -4,6 +4,7 @@ Tests para la aplicación DevOps Pipeline con pytest
 
 import pytest
 from fastapi.testclient import TestClient
+
 from server import app
 
 

@@ -17,7 +17,7 @@ from prometheus_client import CollectorRegistry, Counter, Histogram, generate_la
 # Logging setup
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -25,25 +25,25 @@ logger = logging.getLogger(__name__)
 registry = CollectorRegistry()
 
 http_request_counter = Counter(
-    'http_requests_total',
-    'Total number of HTTP requests',
-    ['method', 'route', 'status_code'],
-    registry=registry
+    "http_requests_total",
+    "Total number of HTTP requests",
+    ["method", "route", "status_code"],
+    registry=registry,
 )
 
 http_request_duration = Histogram(
-    'http_request_duration_ms',
-    'Duration of HTTP requests in ms',
-    ['method', 'route', 'status_code'],
+    "http_request_duration_ms",
+    "Duration of HTTP requests in ms",
+    ["method", "route", "status_code"],
     buckets=[0.1, 5, 15, 50, 100, 500],
-    registry=registry
+    registry=registry,
 )
 
 # FastAPI app setup
 app = FastAPI(
     title="DevOps Pipeline API",
     description="Aplicación DevOps con GitHub Actions, Terraform y Docker",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 
@@ -66,21 +66,16 @@ async def metrics_middleware(request, call_next):
 
     # Registrar métricas
     http_request_counter.labels(
-        method=request.method,
-        route=request.url.path,
-        status_code=status_code
+        method=request.method, route=request.url.path, status_code=status_code
     ).inc()
 
     http_request_duration.labels(
-        method=request.method,
-        route=request.url.path,
-        status_code=status_code
+        method=request.method, route=request.url.path, status_code=status_code
     ).observe(process_time)
 
     # Log request details
     logger.info(
-        "%s %s - %d - %.2fms",
-        request.method, request.url.path, status_code, process_time
+        "%s %s - %d - %.2fms", request.method, request.url.path, status_code, process_time
     )
 
     return response
@@ -94,7 +89,7 @@ async def root():
         "message": "DevOps Pipeline - GitHub Actions + Terraform + Docker",
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "version": "1.0.0"
+        "version": "1.0.0",
     }
 
 
@@ -104,14 +99,14 @@ async def health():
     return {
         "status": "healthy",
         "uptime": time.time(),
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
 @app.get("/metrics")
 async def metrics():
     """Prometheus metrics endpoint"""
-    return generate_latest(registry).decode('utf-8')
+    return generate_latest(registry).decode("utf-8")
 
 
 @app.get("/api/info")
@@ -125,7 +120,7 @@ async def info():
             f"{sys.version_info.major}.{sys.version_info.minor}."
             f"{sys.version_info.micro}"
         ),
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
@@ -137,7 +132,7 @@ async def echo(data: dict):
     
     return {
         "received": data,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
@@ -154,7 +149,7 @@ async def service_status(service: str):
     return {
         "service": service,
         "status": "operational",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 
@@ -163,10 +158,7 @@ async def service_status(service: str):
 async def http_exception_handler(_request, exc):
     """Manejador de excepciones HTTP"""
     logger.warning("HTTP Exception: %s", exc.detail)
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"error": exc.detail}
-    )
+    return JSONResponse(status_code=exc.status_code, content={"error": exc.detail})
 
 
 @app.exception_handler(Exception)
@@ -174,8 +166,7 @@ async def general_exception_handler(_request, exc):
     """Manejador general de excepciones"""
     logger.error("General Exception: %s", str(exc), exc_info=True)
     return JSONResponse(
-        status_code=500,
-        content={"error": "Internal Server Error"}
+        status_code=500, content={"error": "Internal Server Error"}
     )
 
 

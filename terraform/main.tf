@@ -29,6 +29,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "aws_account_id" {
+  description = "ID de la cuenta de AWS"
+  type        = string
+  default     = ""
+}
+
 variable "docker_image_name" {
   description = "URI de la imagen en ECR"
   type        = string
@@ -60,6 +66,19 @@ variable "grafana_port" {
 }
 
 data "aws_availability_zones" "available" {}
+
+# Repositorios ECR
+resource "aws_ecr_repository" "app" {
+  name                 = var.app_name
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true # Útil para proyectos académicos/pruebas
+}
+
+resource "aws_ecr_repository" "grafana" {
+  name                 = "devops-grafana"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+}
 
 # Red Básica (VPC y Subnets)
 resource "aws_vpc" "main" {
@@ -156,7 +175,7 @@ resource "aws_ecs_task_definition" "grafana" {
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   container_definitions = jsonencode([{
     name  = "grafana"
-    image = "${secrets.AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/devops-grafana:latest"
+    image = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/devops-grafana:latest"
     portMappings = [{
       containerPort = 3000
       hostPort      = 3000

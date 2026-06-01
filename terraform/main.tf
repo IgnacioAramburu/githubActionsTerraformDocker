@@ -110,7 +110,7 @@ resource "aws_ecs_task_definition" "app" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  execution_role_arn    = aws_iam_role.ecs_task_execution_role.arn
 
   container_definitions = jsonencode([
     {
@@ -136,7 +136,7 @@ resource "aws_ecs_task_definition" "prometheus" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  execution_role_arn    = aws_iam_role.ecs_task_execution_role.arn
   container_definitions = jsonencode([{
     name  = "prometheus"
     image = "prom/prometheus:latest"
@@ -154,7 +154,7 @@ resource "aws_ecs_task_definition" "grafana" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  execution_role_arn    = aws_iam_role.ecs_task_execution_role.arn
   container_definitions = jsonencode([{
     name  = "grafana"
     image = "grafana/grafana:latest"
@@ -362,16 +362,16 @@ resource "aws_security_group" "ecs_tasks" {
   vpc_id = aws_vpc.main.id
 
   ingress {
-    protocol    = "tcp"
-    from_port   = 3000
-    to_port     = 3000
+    protocol        = "tcp"
+    from_port       = 3000
+    to_port         = 3000
     security_groups = [aws_security_group.lb.id]
   }
 
   ingress {
-    protocol    = "tcp"
-    from_port   = 9090
-    to_port     = 9090
+    protocol        = "tcp"
+    from_port       = 9090
+    to_port         = 9090
     security_groups = [aws_security_group.lb.id]
   }
 

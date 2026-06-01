@@ -1,0 +1,11 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    # En Docker Compose usamos 'prometheus:9090'
+    # En AWS, lo ideal es usar la URL del ALB o Service Discovery
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true

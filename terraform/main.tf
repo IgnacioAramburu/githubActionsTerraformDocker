@@ -156,7 +156,7 @@ resource "aws_ecs_task_definition" "grafana" {
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   container_definitions = jsonencode([{
     name  = "grafana"
-    image = "grafana/grafana:latest"
+    image = "${secrets.AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/devops-grafana:latest"
     portMappings = [{
       containerPort = 3000
       hostPort      = 3000
@@ -247,6 +247,7 @@ resource "aws_ecs_service" "main" {
   task_definition = aws_ecs_task_definition.app.arn
   desired_count   = 1
   launch_type     = "FARGATE"
+  health_check_grace_period_seconds = 60
 
   network_configuration {
     security_groups  = [aws_security_group.ecs_tasks.id]
@@ -267,6 +268,7 @@ resource "aws_ecs_service" "prometheus" {
   task_definition = aws_ecs_task_definition.prometheus.arn
   desired_count   = 1
   launch_type     = "FARGATE"
+  health_check_grace_period_seconds = 60
   network_configuration {
     security_groups  = [aws_security_group.ecs_tasks.id]
     subnets          = aws_subnet.public[*].id
@@ -285,6 +287,7 @@ resource "aws_ecs_service" "grafana" {
   task_definition = aws_ecs_task_definition.grafana.arn
   desired_count   = 1
   launch_type     = "FARGATE"
+  health_check_grace_period_seconds = 60
   network_configuration {
     security_groups  = [aws_security_group.ecs_tasks.id]
     subnets          = aws_subnet.public[*].id
@@ -393,6 +396,6 @@ output "prometheus_url" {
 }
 
 output "grafana_url" {
-  description = "URL de Grafana"
+  description = "URL de la interfaz visual de Grafana (acceso de usuario)"
   value       = "http://${aws_lb.main.dns_name}:${var.grafana_port}"
 }

@@ -137,8 +137,8 @@ resource "aws_ecs_task_definition" "prometheus" {
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   container_definitions    = jsonencode([{
-    name         = "prometheus"
-    image        = "prom/prometheus:latest"
+    name  = "prometheus"
+    image = "prom/prometheus:latest"
     portMappings = [{
       containerPort = 9090
       hostPort      = 9090
@@ -155,8 +155,8 @@ resource "aws_ecs_task_definition" "grafana" {
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   container_definitions    = jsonencode([{
-    name         = "grafana"
-    image        = "grafana/grafana:latest"
+    name  = "grafana"
+    image = "grafana/grafana:latest"
     portMappings = [{
       containerPort = 3000
       hostPort      = 3000
@@ -164,7 +164,6 @@ resource "aws_ecs_task_definition" "grafana" {
     environment = [{ name = "GF_SECURITY_ADMIN_PASSWORD", value = "admin123" }]
   }])
 }
-
 # Load Balancer (ALB)
 resource "aws_lb" "main" {
   name               = "${var.app_name}-alb"

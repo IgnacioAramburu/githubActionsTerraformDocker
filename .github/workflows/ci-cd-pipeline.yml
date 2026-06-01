@@ -8,8 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+
   AWS_REGION: us-east-1
   ECR_REPOSITORY: devops-app
 
@@ -127,10 +126,6 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Lowercase image name for cache
-        run: |
-          echo "IMAGE_NAME_LOWER=${IMAGE_NAME,,}" >> ${GITHUB_ENV}
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -147,32 +142,17 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      # Extraigo metadata para generar las etiquetas
-      # type=ref,event=branch: Tag con el nombre de la rama (main, develop)
-      # type=semver: Tag con versión semántica si existe (v1.0.0)
-      # type=sha: Tag con el hash del commit
-      # type=raw,value=latest: "latest" solo en la rama principal
-      # type=raw,value=python: Tag literal "python"
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-
       - name: Build y push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           file: ./docker/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          #Reusar caches del build docker image de ejecuciones anteriores para buildear mas rapido
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:buildcache,mode=max
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Scan imagen con Trivy (Analisis de vulnerabilidades)
         uses: aquasecurity/trivy-action@master

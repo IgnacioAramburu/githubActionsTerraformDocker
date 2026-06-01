@@ -4,11 +4,11 @@ Autor: DevOps Team
 Versión: 1.0.0
 """
 
+from datetime import datetime
 import logging
 import os
 import sys
 import time
-from datetime import datetime
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
@@ -77,8 +77,11 @@ async def metrics_middleware(request, call_next):
         status_code=status_code
     ).observe(process_time)
 
-    # Log
-    logger.info("%s %s - %d - %.2fms", request.method, request.url.path, status_code, process_time)
+    # Log request details
+    logger.info(
+        "%s %s - %d - %.2fms",
+        request.method, request.url.path, status_code, process_time
+    )
 
     return response
 
@@ -141,10 +144,8 @@ async def service_status(service: str):
     valid_services = ["app", "prometheus", "grafana"]
     
     if service not in valid_services:
-        error_detail = (
-            f"Servicio '{service}' no válido. "
-            f"Opciones: {valid_services}"
-        )
+        error_detail = f"Servicio '{service}' no válido. "
+        error_detail += f"Opciones: {valid_services}"
         raise HTTPException(status_code=400, detail=error_detail)
     
     return {
@@ -182,6 +183,7 @@ async def startup_event():
     logger.info("✓ Aplicación iniciada")
     logger.info("✓ Métricas disponibles en /metrics")
     logger.info("✓ Documentación en /docs")
+
 
 @app.on_event("shutdown")
 async def shutdown_event():

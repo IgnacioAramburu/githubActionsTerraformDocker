@@ -1,7 +1,6 @@
 # DevOps Pipeline: GitHub Actions + Terraform + Docker (Python)
 
 [![CI/CD Pipeline](https://github.com/your-repo/actions/workflows/ci-cd-pipeline.yml/badge.svg)](https://github.com/your-repo/actions/workflows/ci-cd-pipeline.yml)
-[![Terraform Validation](https://github.com/your-repo/actions/workflows/terraform-validation.yml/badge.svg)](https://github.com/your-repo/actions/workflows/terraform-validation.yml)
 
 ## 📋 Descripción
 

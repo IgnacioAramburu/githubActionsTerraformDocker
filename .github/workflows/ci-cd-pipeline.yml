@@ -13,6 +13,41 @@ env:
   ECR_REPOSITORY: devops-app
 
 jobs:
+  # Job: Preparar infraestructura base (ECR)
+  # Se requiere que los repositorios existan antes de que el job build-docker intente hacer el push
+  prepare-infra:
+    name: Prepare Infrastructure (ECR)
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar credenciales de AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Create ECR Repositories
+        working-directory: ./terraform
+        run: |
+          terraform apply -auto-approve \
+            -target=aws_ecr_repository.app \
+            -target=aws_ecr_repository.grafana \
+            -var="docker_image_name=initial" \
+            -var="aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
+            -var="aws_region=${{ env.AWS_REGION }}"
+
   # Job: Análisis estático y linting
   lint-and-analyze:
     name: Lint & Code Analysis
@@ -116,7 +151,7 @@ jobs:
   build-docker:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, prepare-infra]
     permissions:
       contents: read
       packages: write

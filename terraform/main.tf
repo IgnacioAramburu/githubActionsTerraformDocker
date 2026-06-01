@@ -110,12 +110,12 @@ resource "aws_ecs_task_definition" "app" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  execution_role_arn    = aws_iam_role.ecs_task_execution_role.arn
 
-  container_definitions    = jsonencode([
+  container_definitions = jsonencode([
     {
-      name  = var.app_name
-      image = var.docker_image_name
+      name         = var.app_name
+      image        = var.docker_image_name
       portMappings = [
         {
           containerPort = var.container_port
@@ -136,10 +136,10 @@ resource "aws_ecs_task_definition" "prometheus" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  container_definitions    = jsonencode([{
-    name  = "prometheus"
-    image = "prom/prometheus:latest"
+  execution_role_arn    = aws_iam_role.ecs_task_execution_role.arn
+  container_definitions = jsonencode([{
+    name         = "prometheus"
+    image        = "prom/prometheus:latest"
     portMappings = [{
       containerPort = 9090
       hostPort      = 9090
@@ -154,10 +154,10 @@ resource "aws_ecs_task_definition" "grafana" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  container_definitions    = jsonencode([{
-    name  = "grafana"
-    image = "grafana/grafana:latest"
+  execution_role_arn    = aws_iam_role.ecs_task_execution_role.arn
+  container_definitions = jsonencode([{
+    name         = "grafana"
+    image        = "grafana/grafana:latest"
     portMappings = [{
       containerPort = 3000
       hostPort      = 3000
@@ -304,7 +304,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   name = "${var.app_name}-execution-role"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         Action = "sts:AssumeRole"

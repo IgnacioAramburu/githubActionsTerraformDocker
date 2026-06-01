@@ -229,6 +229,10 @@ jobs:
           echo "Verificando despliegue en: $ALB_URL"
           sleep 30
           curl -f "$ALB_URL/health" || echo "La aplicación aún no responde en el ALB"
+          
+          echo "Verificando acceso a Prometheus UI..."
+          PROMETHEUS_URL=$(cd terraform && terraform output -raw prometheus_url || echo "$ALB_URL:9090")
+          curl -sI "$PROMETHEUS_URL" | grep "HTTP/1.1 200" || echo "Prometheus UI no accesible externamente"
 
       - name: Generar reporte de despliegue
         if: success()

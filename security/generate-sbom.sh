@@ -5,21 +5,21 @@ set -e
 
 echo "📦 Generando SBOM con CycloneDX..."
 
-# Verificar si npm está instalado
-if ! command -v npm &> /dev/null; then
-    echo "❌ npm no está instalado"
+# Verificar si python3 está instalado
+if ! command -v python3 &> /dev/null; then
+    echo "❌ python3 no está instalado"
     exit 1
 fi
 
-# Instalar cyclonedx-npm globalmente si es necesario
-if ! npm list -g @cyclonedx/npm &> /dev/null; then
-    echo "Instalando @cyclonedx/npm..."
-    npm install -g @cyclonedx/npm
+# Instalar cyclonedx-bom si es necesario
+if ! pip show cyclonedx-bom &> /dev/null; then
+    echo "Instalando cyclonedx-bom..."
+    pip install cyclonedx-bom
 fi
 
 # Generar SBOM
 cd "$(dirname "$0")/.."
-cyclonedx-npm --output-file sbom.xml
+cyclonedx-py requirements requirements.txt --output-format xml --output-file sbom.xml
 
 echo "✓ SBOM generado: sbom.xml"
 ls -lh sbom.xml

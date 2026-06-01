@@ -47,6 +47,18 @@ variable "environment" {
   default     = "production"
 }
 
+variable "prometheus_port" {
+  description = "Puerto para Prometheus"
+  type        = number
+  default     = 9090
+}
+
+variable "grafana_port" {
+  description = "Puerto para Grafana"
+  type        = number
+  default     = 3001
+}
+
 data "aws_availability_zones" "available" {}
 
 # Red Básica (VPC y Subnets)
@@ -117,6 +129,43 @@ resource "aws_ecs_task_definition" "app" {
   ])
 }
 
+# Tarea Prometheus
+resource "aws_ecs_task_definition" "prometheus" {
+  family                   = "prometheus"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  container_definitions = jsonencode([{
+    name  = "prometheus"
+    image = "prom/prometheus:latest"
+    portMappings = [{
+      containerPort = 9090
+      hostPort      = 9090
+    }]
+  }])
+}
+
+# Tarea Grafana
+resource "aws_ecs_task_definition" "grafana" {
+  family                   = "grafana"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  container_definitions = jsonencode([{
+    name  = "grafana"
+    image = "grafana/grafana:latest"
+    portMappings = [{
+      containerPort = 3000
+      hostPort      = 3000
+    }]
+    environment = [{ name = "GF_SECURITY_ADMIN_PASSWORD", value = "admin123" }]
+  }])
+}
+
 # Load Balancer (ALB)
 resource "aws_lb" "main" {
   name               = "${var.app_name}-alb"
@@ -138,6 +187,28 @@ resource "aws_lb_target_group" "app" {
   }
 }
 
+resource "aws_lb_target_group" "prometheus" {
+  name        = "${var.app_name}-prometheus-tg"
+  port        = 9090
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+  health_check {
+    path = "/-/healthy"
+  }
+}
+
+resource "aws_lb_target_group" "grafana" {
+  name        = "${var.app_name}-grafana-tg"
+  port        = 3000
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+  health_check {
+    path = "/api/health"
+  }
+}
+
 resource "aws_lb_listener" "front_end" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
@@ -146,6 +217,28 @@ resource "aws_lb_listener" "front_end" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app.arn
+  }
+}
+
+resource "aws_lb_listener" "prometheus" {
+  load_balancer_arn = aws_lb.main.arn
+  port              = var.prometheus_port
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.prometheus.arn
+  }
+}
+
+resource "aws_lb_listener" "grafana" {
+  load_balancer_arn = aws_lb.main.arn
+  port              = var.grafana_port
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.grafana.arn
   }
 }
 
@@ -167,6 +260,42 @@ resource "aws_ecs_service" "main" {
     target_group_arn = aws_lb_target_group.app.arn
     container_name   = var.app_name
     container_port   = var.container_port
+  }
+}
+
+resource "aws_ecs_service" "prometheus" {
+  name            = "prometheus"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.prometheus.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+  network_configuration {
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    subnets          = aws_subnet.public[*].id
+    assign_public_ip = true
+  }
+  load_balancer {
+    target_group_arn = aws_lb_target_group.prometheus.arn
+    container_name   = "prometheus"
+    container_port   = 9090
+  }
+}
+
+resource "aws_ecs_service" "grafana" {
+  name            = "grafana"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.grafana.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+  network_configuration {
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    subnets          = aws_subnet.public[*].id
+    assign_public_ip = true
+  }
+  load_balancer {
+    target_group_arn = aws_lb_target_group.grafana.arn
+    container_name   = "grafana"
+    container_port   = 3000
   }
 }
 
@@ -205,6 +334,20 @@ resource "aws_security_group" "lb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    protocol    = "tcp"
+    from_port   = var.prometheus_port
+    to_port     = var.prometheus_port
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = var.grafana_port
+    to_port     = var.grafana_port
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     protocol    = "tcp"
     from_port   = var.container_port
@@ -219,9 +362,16 @@ resource "aws_security_group" "ecs_tasks" {
   vpc_id = aws_vpc.main.id
 
   ingress {
-    protocol        = "tcp"
-    from_port       = var.container_port
-    to_port         = var.container_port
+    protocol    = "tcp"
+    from_port   = 3000
+    to_port     = 3000
+    security_groups = [aws_security_group.lb.id]
+  }
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 9090
+    to_port     = 9090
     security_groups = [aws_security_group.lb.id]
   }
 
@@ -237,4 +387,14 @@ resource "aws_security_group" "ecs_tasks" {
 output "app_url" {
   description = "URL de la API (Load Balancer DNS)"
   value       = "http://${aws_lb.main.dns_name}"
+}
+
+output "prometheus_url" {
+  description = "URL de Prometheus"
+  value       = "http://${aws_lb.main.dns_name}:${var.prometheus_port}"
+}
+
+output "grafana_url" {
+  description = "URL de Grafana"
+  value       = "http://${aws_lb.main.dns_name}:${var.grafana_port}"
 }

@@ -213,6 +213,23 @@ jobs:
           sleep 30
           curl -f "$ALB_URL/health" || echo "La aplicación aún no responde en el ALB"
 
+      - name: Generar reporte de despliegue
+        if: success()
+        run: |
+          echo "# Deployment Report" > deployment-report.md
+          echo "Date: $(date)" >> deployment-report.md
+          echo "Status: Success" >> deployment-report.md
+          echo "Environment: production" >> deployment-report.md
+          echo "ALB URL: $(cd terraform && terraform output -raw app_url)" >> deployment-report.md
+          echo "Commit SHA: ${{ github.sha }}" >> deployment-report.md
+
+      - name: Subir reporte de despliegue
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-report
+          path: deployment-report.md
+
   # Job: Resumen final
   summary:
     name: Pipeline Summary
@@ -224,8 +241,8 @@ jobs:
       - name: Pipeline Status
         run: |
           echo "✅ Pipeline ejecutado"
-          echo "📊 Trabajos ejecutados: 5"
-          echo "🔗 Artifacts disponibles en: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "📊 Jobs productivos definidos: 5"
+          echo "� Artifacts disponibles en: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Crear issue si hay fallo
         if: failure()

@@ -4,9 +4,9 @@
     <timestamp>2024-04-11T00:00:00Z</timestamp>
     <tools>
       <tool>
-        <vendor>GitHub</vendor>
-        <name>CycloneDX npm</name>
-        <version>3.11.7</version>
+        <vendor>CycloneDX</vendor>
+        <name>cyclonedx-python</name>
+        <version>3.11.0</version>
       </tool>
     </tools>
     <component type="application">
@@ -22,19 +22,19 @@
   </metadata>
   <components>
     <component type="library">
-      <name>express</name>
-      <version>4.18.2</version>
-      <purl>pkg:npm/express@4.18.2</purl>
+      <name>fastapi</name>
+      <version>0.104.1</version>
+      <purl>pkg:pypi/fastapi@0.104.1</purl>
     </component>
     <component type="library">
-      <name>prom-client</name>
-      <version>14.2.0</version>
-      <purl>pkg:npm/prom-client@14.2.0</purl>
+      <name>prometheus-client</name>
+      <version>0.19.0</version>
+      <purl>pkg:pypi/prometheus-client@0.19.0</purl>
     </component>
     <component type="library">
-      <name>body-parser</name>
-      <version>1.20.2</version>
-      <purl>pkg:npm/body-parser@1.20.2</purl>
+      <name>uvicorn</name>
+      <version>0.24.0</version>
+      <purl>pkg:pypi/uvicorn@0.24.0</purl>
     </component>
   </components>
 </bom>

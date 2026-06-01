@@ -5,14 +5,14 @@
 
 ## 📋 Descripción
 
-Pipeline CI/CD completo que automatiza la compilación, testing, análisis de seguridad y despliegue de una **aplicación Python con FastAPI** en contenedores Docker. Infrastructure as Code (IaC) con Terraform para gestionar la infraestructura local.
+Pipeline CI/CD completo que automatiza la compilación, testing, análisis de seguridad y despliegue de una **aplicación Python con FastAPI** en contenedores Docker. Infrastructure as Code (IaC) con Terraform para gestionar la infraestructura en **AWS (ECS Fargate)**.
 
 **Herramientas utilizadas:**
 - 🔄 **CI/CD**: GitHub Actions
 - 🏗️ **IaC**: Terraform
 - 🐳 **Contenedores**: Docker (Python 3.10)
-- 🔒 **Seguridad**: PyLint, Black, Snyk, Trivy
-- 📊 **Monitoreo**: Prometheus + Grafana
+- 🔒 **Seguridad**: PyLint, Black, Trivy, Bandit, CycloneDX (SBOM)
+- 📊 **Observabilidad**: Prometheus + Grafana
 - 🧪 **Testing**: pytest + pytest-asyncio
 - ⚡ **Framework**: FastAPI + Uvicorn
 
@@ -25,13 +25,14 @@ Pipeline CI/CD completo que automatiza la compilación, testing, análisis de se
 - Docker Compose
 - Terraform >= 1.0
 - Python 3.10+
-- pip (Python package manager)
-- Git
+- AWS CLI configurado
+```
 
-# En Ubuntu/Debian:
-sudo apt-get update
-sudo apt-get install -y docker.io docker-compose terraform python3.10 python3-pip
-
+### Configuración de AWS
+Es necesario configurar las credenciales de AWS y crear el bucket S3 para el backend de Terraform:
+- **Bucket**: `devops-app-terraform-state-1780247597`
+- **Región**: `us-east-1`
+```bash
 # En macOS:
 brew install docker docker-compose terraform python@3.10
 ```
@@ -68,9 +69,6 @@ newgrp docker
 │   └── generate-sbom.sh      # Script para generar SBOM
 ├── docs/                     # Documentación adicional
 ├── docker-compose.yml        # Orquestación local
-├── package.json              # Dependencias Node.js
-├── .eslintrc.json            # Configuración ESLint
-├── jest.config.js            # Configuración Jest
 └── README.md                 # Este archivo
 ```
 
@@ -132,7 +130,8 @@ black --check src/
 ## 📊 Dashboard de Monitoreo
 
 ### Prometheus
-**URL**: http://localhost:9090
+**Local**: [http://localhost:9090](http://localhost:9090)  
+**AWS (Producción)**: [http://devops-app-alb-1530031189.us-east-1.elb.amazonaws.com:9090](http://devops-app-alb-1530031189.us-east-1.elb.amazonaws.com:9090)
 
 Métricas disponibles:
 - `http_requests_total` - Total de requests HTTP
@@ -140,8 +139,9 @@ Métricas disponibles:
 - `python_info` - Información del runtime Python
 
 ### Grafana
-**URL**: http://localhost:3001
-**Credentials**: admin / admin123
+**Local**: http://localhost:3001  
+**AWS (Producción)**: http://devops-app-alb-1530031189.us-east-1.elb.amazonaws.com:3001  
+**Credenciales**: `admin` / `admin123`
 
 Dashboards disponibles:
 - DevOps Application Metrics
@@ -150,37 +150,32 @@ Dashboards disponibles:
 
 ## 🔄 CI/CD Pipeline
 
-### Trabajo 1: Lint & Code Analysis
+### Job 1: Lint & Code Analysis
 - ✅ PyLint analysis
-- ✅ pip check (Security)
+- ✅ Black formatting check
+- ✅ pip check (Dependency audit)
 - ⏱️ ~2 minutos
 
-### Trabajo 2: Test & Coverage
+### Job 2: Test & Coverage
 - ✅ Unit tests con pytest
-- ✅ Coverage reporting
-- ✅ Codecov integration
+- ✅ Coverage reporting (XML/HTML)
+- ✅ Codecov integration (Upload)
 - ⏱️ ~3 minutos
 
-### Trabajo 3: Security Scanning
-- ✅ Snyk vulnerability scan
-- ✅ Dependencia analysis
-- ⏱️ ~2 minutos
-
-### Trabajo 4: Generate SBOM
+### Job 3: Generate SBOM
 - ✅ CycloneDX SBOM generation
-- ✅ Software Bill of Materials
+- ✅ Exportación de `dependencies.txt`
 - ⏱️ ~1 minuto
 
-### Trabajo 5: Build Docker Image
+### Job 4: Build Docker Image
 - ✅ Multi-stage docker build
-- ✅ Image registry push
-- ✅ Trivy vulnerability scan (ECR)
+- ✅ Push a Amazon ECR
+- ✅ Trivy vulnerability scan (SARIF report)
 - ⏱️ ~5-10 minutos
 
-### Trabajo 6: Deploy
-- ✅ Deployment report generation
-- ✅ Artifact upload
-- ⏱️ ~1 minuto
+### Job 5: Deploy
+- ✅ Terraform Apply (Infraestructura AWS)
+- ✅ Verificación de Health Check en ALB
 
 ## 🔒 Seguridad
 
@@ -192,7 +187,6 @@ Dashboards disponibles:
 
 2. **Auditoría de Dependencias**
    - pip check: Verificación de paquetes
-   - Snyk: Deep security analysis
    - Escaneo de requirements.txt
 
 3. **Software Bill of Materials (SBOM)**
@@ -298,7 +292,7 @@ image_id = "sha256:..."
 La aplicación expone métricas en `/metrics` en formato Prometheus:
 - `http_requests_total` - Total de requests
 - `http_request_duration_ms` - Latencia de requests
-- Métricas del runtime Node.js
+- Métricas del runtime **Python**
 
 ### Crear Dashboard Personalizado en Grafana
 
@@ -450,7 +444,7 @@ MIT License - Ver LICENSE file para más detalles.
 - [x] Dockerfile multi-stage con buenas prácticas
 - [x] Tests unitarios con pytest
 - [x] Análisis de código (PyLint)
-- [x] Análisis de seguridad (Snyk, Trivy, pip-audit)
+- [x] Análisis de seguridad (Trivy, pip check)
 - [x] SBOM (CycloneDX)
 - [x] Monitoreo (Prometheus + Grafana)
 - [x] Documentación completa
@@ -460,8 +454,7 @@ MIT License - Ver LICENSE file para más detalles.
 
 - **Nombre**: GitHub Actions + Terraform + Docker (Local CI/CD)
 - **Versión**: 1.0.0
-- **Fecha**: April 2024
-- **Rúbrica**: 100 puntos (25+20+15+20+10+10)
+- **Fecha**: May 2026
 
 ---
 

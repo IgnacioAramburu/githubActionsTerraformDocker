@@ -234,6 +234,10 @@ jobs:
           PROMETHEUS_URL=$(cd terraform && terraform output -raw prometheus_url || echo "$ALB_URL:9090")
           curl -sI "$PROMETHEUS_URL" | grep "HTTP/1.1 200" || echo "Prometheus UI no accesible externamente"
 
+          echo "Verificando acceso a Grafana UI..."
+          GRAFANA_URL=$(cd terraform && terraform output -raw grafana_url || echo "$ALB_URL:3001")
+          curl -sI "$GRAFANA_URL" | grep "HTTP/1.1 200" || echo "Grafana UI no accesible externamente"
+
       - name: Generar reporte de despliegue
         if: success()
         run: |

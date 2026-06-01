@@ -4,15 +4,15 @@ Autor: DevOps Team
 Versión: 1.0.0
 """
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
-from prometheus_client import Counter, Histogram, generate_latest, CollectorRegistry
-from prometheus_client import CONTENT_TYPE_LATEST
-import time
 import logging
-from datetime import datetime
 import os
 import sys
+import time
+from datetime import datetime
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
+from prometheus_client import CollectorRegistry, Counter, Histogram, generate_latest
 
 # Logging setup
 logging.basicConfig(
@@ -52,36 +52,34 @@ app = FastAPI(
 async def metrics_middleware(request, call_next):
     """Middleware para recolectar métricas de Prometheus"""
     start_time = time.time()
-    
+
     try:
         response = await call_next(request)
         status_code = response.status_code
     except Exception as e:
-        logger.error(f"Error procesando request: {str(e)}")
+        logger.error("Error procesando request: %s", str(e))
         status_code = 500
         raise
-    
+
     # Calcular duración
     process_time = (time.time() - start_time) * 1000
-    
+
     # Registrar métricas
     http_request_counter.labels(
         method=request.method,
         route=request.url.path,
         status_code=status_code
     ).inc()
-    
+
     http_request_duration.labels(
         method=request.method,
         route=request.url.path,
         status_code=status_code
     ).observe(process_time)
-    
+
     # Log
-    logger.info(
-        f"{request.method} {request.url.path} - {status_code} - {process_time:.2f}ms"
-    )
-    
+    logger.info("%s %s - %d - %.2fms", request.method, request.url.path, status_code, process_time)
+
     return response
 
 
@@ -142,10 +140,8 @@ async def service_status(service: str):
     valid_services = ["app", "prometheus", "grafana"]
     
     if service not in valid_services:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Servicio '{service}' no válido. Opciones: {valid_services}"
-        )
+        error_detail = f"Servicio '{service}' no válido. Opciones: {valid_services}"
+        raise HTTPException(status_code=400, detail=error_detail)
     
     return {
         "service": service,
@@ -156,9 +152,9 @@ async def service_status(service: str):
 
 # Error handlers
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
+async def http_exception_handler(_request, exc):
     """Manejador de excepciones HTTP"""
-    logger.warning(f"HTTP Exception: {exc.detail}")
+    logger.warning("HTTP Exception: %s", exc.detail)
     return JSONResponse(
         status_code=exc.status_code,
         content={"error": exc.detail}
@@ -166,9 +162,9 @@ async def http_exception_handler(request, exc):
 
 
 @app.exception_handler(Exception)
-async def general_exception_handler(request, exc):
+async def general_exception_handler(_request, exc):
     """Manejador general de excepciones"""
-    logger.error(f"General Exception: {str(exc)}", exc_info=True)
+    logger.error("General Exception: %s", str(exc), exc_info=True)
     return JSONResponse(
         status_code=500,
         content={"error": "Internal Server Error"}
@@ -183,7 +179,6 @@ async def startup_event():
     logger.info("✓ Métricas disponibles en /metrics")
     logger.info("✓ Documentación en /docs")
 
-
 @app.on_event("shutdown")
 async def shutdown_event():
     """Event ejecutado al cerrar la aplicación"""
@@ -193,9 +188,9 @@ async def shutdown_event():
 if __name__ == "__main__":
     import uvicorn
     
-    port = int(os.getenv("PORT", 3000))
+    port = int(os.getenv("PORT", "3000"))
     host = os.getenv("HOST", "0.0.0.0")
-    
+
     uvicorn.run(
         app,
         host=host,

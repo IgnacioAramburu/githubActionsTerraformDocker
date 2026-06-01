@@ -68,6 +68,11 @@ variable "grafana_port" {
 data "aws_availability_zones" "available" {}
 
 # Repositorios ECR
+import {
+  to = aws_ecr_repository.app
+  id = "devops-app"
+}
+
 resource "aws_ecr_repository" "app" {
   name                 = var.app_name
   image_tag_mutability = "MUTABLE"

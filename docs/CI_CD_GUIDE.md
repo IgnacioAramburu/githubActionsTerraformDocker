@@ -100,6 +100,7 @@ pytest src/test_server.py -v
 
 ### ❌ Falla en Terraform Deploy
 - Revisar IAM permisos
+- **Error AccessDenied (ECR):** Asegúrate de que el usuario tenga `ecr:CreateRepository`.
 - Validar terraform: `terraform validate`
 - Revisar estado de S3
 

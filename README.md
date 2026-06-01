@@ -379,6 +379,14 @@ chmod +x security/*.sh
    - `AWS_ACCOUNT_ID`: ID de cuenta de 12 dígitos
    - `SNYK_TOKEN`: Token de seguridad de Snyk
 
+> [!IMPORTANT]
+> El usuario de IAM `github-deployer` debe tener adjuntas las siguientes políticas de AWS:
+> - `AmazonECS_FullAccess`
+> - `AmazonEC2ContainerRegistryFullAccess`
+> - `AmazonVPCFullAccess`
+> - `AmazonS3FullAccess` (para el backend de Terraform)
+> - `IAMFullAccess` (para crear los roles de ejecución de ECS)
+
 2. Configurar ramas protegidas:
    - Requerir checks del pipeline
    - Requerir revisiones

@@ -38,6 +38,13 @@ jobs:
         working-directory: ./terraform
         run: terraform init
 
+      - name: Import existing ECR Repository (if exists)
+        working-directory: ./terraform
+        continue-on-error: true
+        run: |
+          terraform import -var="docker_image_name=initial" -var="aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" -var="aws_region=${{ env.AWS_REGION }}" \
+          aws_ecr_repository.app devops-app || echo "Repository already in state or not found"
+
       - name: Create ECR Repositories
         working-directory: ./terraform
         run: |
@@ -67,16 +74,16 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: PyLint - Análisis de código
-        run: pylint src/server.py --disable=C0103,R0913 || true
-        continue-on-error: true
+        run: pylint src/server.py --disable=C0103,R0913
+        continue-on-error: false
 
       - name: Black - Verificar formato
-        run: black --check src/ || true
-        continue-on-error: true
+        run: black --check src/
+        continue-on-error: false
 
       - name: pip check - Auditoría de seguridad
-        run: pip check || true
-        continue-on-error: true
+        run: pip check
+        continue-on-error: false
 
   # Job: Testing y coverage
   test:

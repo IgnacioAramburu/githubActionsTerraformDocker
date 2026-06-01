@@ -193,12 +193,12 @@ jobs:
       - name: Terraform Format Check
         run: terraform fmt -check -recursive ./terraform
 
-      - name: Terraform Validate
-        run: cd terraform && terraform validate
-
       - name: Terraform Init
         working-directory: ./terraform
         run: terraform init
+
+      - name: Terraform Validate
+        run: cd terraform && terraform validate
 
       - name: Terraform Plan
         working-directory: ./terraform

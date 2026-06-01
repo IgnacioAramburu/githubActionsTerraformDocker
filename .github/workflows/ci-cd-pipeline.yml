@@ -208,7 +208,8 @@ jobs:
         run: terraform init
 
       - name: Terraform Validate
-        run: cd terraform && terraform validate
+        working-directory: ./terraform
+        run: terraform validate
 
       - name: Terraform Plan
         working-directory: ./terraform

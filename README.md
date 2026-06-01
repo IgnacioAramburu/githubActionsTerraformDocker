@@ -52,23 +52,29 @@ newgrp docker
 │   ├── ci-cd-pipeline.yml     # Pipeline principal CI/CD
 │   └── terraform-validation.yml # Validación de Terraform
 ├── src/                        # Código fuente de la aplicación
-│   ├── server.py              # Aplicación FastAPI principal
-│   └── test_server.py         # Tests (pytest)
+│   ├── server.py              # App FastAPI con métricas Prometheus
+│   └── test_server.py         # Suite de pruebas unitarias
 ├── docker/                     # Configuración Docker
 │   └── Dockerfile             # Multi-stage Dockerfile
 ├── terraform/                 # Configuración Infrastructure as Code
-│   ├── main.tf               # Configuración principal
-│   ├── init.sh               # Script de inicialización
+│   ├── main.tf               # Recursos AWS (ECS, VPC, ALB)
+│   ├── init.sh               # Script de inicialización de infraestructura
 │   └── destroy.sh            # Script de destrucción
 ├── monitoring/               # Configuración de monitoreo
 │   ├── prometheus.yml        # Configuración de Prometheus
 │   └── grafana-provisioning/ # Dashboards de Grafana
-├── security/                 # Configuración de seguridad
-│   ├── sbom-template.xml     # SBOM (Bill of Materials)
-│   ├── SECURITY.md           # Documentación de seguridad
-│   └── generate-sbom.sh      # Script para generar SBOM
-├── docs/                     # Documentación adicional
+├── security/                 # Seguridad y Cumplimiento
+│   └── sbom-template.xml     # Plantilla base CycloneDX
+├── docs/                     # Documentación técnica detallada
+│   ├── CI_CD_GUIDE.md        # Guía del pipeline
+│   ├── DEPLOYMENT_TERRAFORM.md # Guía de Infraestructura
+│   ├── MONITORING.md         # Manual de Observabilidad
+│   └── SECURITY_COMPLIANCE.md # Detalles de Controles de Seguridad
 ├── docker-compose.yml        # Orquestación local
+├── pyproject.toml            # Configuración de herramientas Python
+├── requirements.txt          # Dependencias del proyecto
+├── setup.sh                  # Script de configuración inicial
+├── validate.sh               # Script de validación de salud del proyecto
 └── README.md                 # Este archivo
 ```
 

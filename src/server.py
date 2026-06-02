@@ -12,7 +12,13 @@ import time
 
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import JSONResponse
-from prometheus_client import CollectorRegistry, Counter, Histogram, generate_latest
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    CollectorRegistry,
+    Counter,
+    Histogram,
+    generate_latest,
+)
 
 # Logging setup
 logging.basicConfig(
@@ -104,7 +110,7 @@ async def health():
 @app.get("/metrics")
 async def metrics():
     """Prometheus metrics endpoint"""
-    return Response(content=generate_latest(registry), media_type="text/plain")
+    return Response(content=generate_latest(registry), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.get("/api/info")

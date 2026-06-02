@@ -50,6 +50,8 @@ rate(http_requests_total{status_code="5xx"}[5m])
 
 ### URL
 http://localhost:9090
+**Local**: [http://localhost:9090](http://localhost:9090)  
+**AWS (Producción)**: [http://devops-app-alb-1530031189.us-east-1.elb.amazonaws.com:9090](http://devops-app-alb-1530031189.us-east-1.elb.amazonaws.com:9090)
 
 ### Configuración
 Archivo: `monitoring/prometheus.yml`
@@ -64,6 +66,16 @@ scrape_configs:
 
 ### Queries Útiles
 
+#### 📡 Tráfico en Tiempo Real
+```promql
+# Requests por segundo (RPS) promediado en 5m
+sum(rate(http_requests_total[5m]))
+
+# Latencia P95 actual (ms)
+histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[5m])) by (le))
+```
+```
+
 ```promql
 # Estado del servicio
 up{job="devops-app"}
@@ -75,12 +87,19 @@ http_requests_total
 sum by (route) (rate(http_requests_total[5m]))
 
 #### Análisis Histórico (24 Horas)
+#### Auditoría de 24 Horas
 ```promql
 # Total de llamadas en el último día
+# Total de peticiones en el último día
 sum(increase(http_requests_total[24h]))
 
 # Desglose de errores (4xx y 5xx) del último día
 sum by (status_code) (increase(http_requests_total{status_code=~"4..|5.."}[24h]))
+# Éxitos vs Errores (4xx/5xx) acumulados
+sum by (status_code) (increase(http_requests_total[24h]))
+
+# Latencia P95 histórica (últimas 24h)
+histogram_quantile(0.95, sum by (le) (increase(http_request_duration_ms_bucket[24h])))
 ```
 
 # Errores
@@ -110,6 +129,8 @@ alerting:
 
 ### Acceso
 - URL: http://localhost:3001
+**Local**: http://localhost:3001  
+**AWS (Producción)**: http://devops-app-alb-1530031189.us-east-1.elb.amazonaws.com:3001
 - Usuario: admin
 - Contraseña: admin123
 
@@ -219,6 +240,7 @@ http_request_duration_ms_count{labels...} count
 # En Prometheus web: Status → Targets
 # Ver si endpoint accesible
 curl http://app:3000/metrics
+curl http://app.local:3000/metrics
 ```
 
 ### Ver logs Prometheus

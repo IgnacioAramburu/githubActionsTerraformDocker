@@ -44,7 +44,9 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
     networks:
-      - devops-network
+      devops-network:
+        aliases:
+          - prometheus.local
     restart: unless-stopped
 
   grafana:

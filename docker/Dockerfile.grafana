@@ -1,7 +1,6 @@
 FROM grafana/grafana:latest
 
-# Copiar configuraciones de provisioning
-COPY monitoring/grafana-provisioning/datasources /etc/grafana/provisioning/datasources
-COPY monitoring/grafana-provisioning/dashboards /etc/grafana/provisioning/dashboards
+# Copiar toda la estructura de provisioning de una sola vez
+COPY monitoring/grafana-provisioning/ /etc/grafana/provisioning/
 
 EXPOSE 3000

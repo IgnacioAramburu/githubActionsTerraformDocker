@@ -29,7 +29,7 @@ pylint src/
 - Valida sintaxis y estándares Python
 - Estado: ⚠️ `continue-on-error: true` (no bloquea)
 
-#### 2. **Tests & Coverage** (2 min)
+#### 2. **Test & Coverage** (2 min)
 ```bash
 pytest src/test_server.py -v
 ```

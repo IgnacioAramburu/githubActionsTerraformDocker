@@ -84,7 +84,7 @@ newgrp docker
 ### 1. Clonar el repositorio
 ```bash
 git clone https://github.com/IgnacioAramburu/githubActionsTerraformDocker.git
-cd GitHub Actions+Terraform+Docker
+cd githubActionsTerraformDocker
 ```
 
 ### 2. Opción A: Docker Compose (Recomendado para desarrollo local)

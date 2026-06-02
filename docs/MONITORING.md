@@ -137,11 +137,10 @@ alerting:
 ### Dashboards Disponibles
 
 #### DevOps App Dashboard
-- Muestra en tiempo real:
-  - Requests por segundo
-  - Errores
-  - P95 latencia
-  - Uptime
+Organizados en la carpeta **"App"**, dispones de:
+1. **DevOps Application Metrics**: Visión general de salud y tráfico.
+2. **HTTP Application Metrics**: Desglose detallado por rutas y códigos de estado.
+3. **Global Application Telemetry**: Estadísticas acumuladas y rendimiento histórico.
 
 ### Crear Dashboard Personalizado
 

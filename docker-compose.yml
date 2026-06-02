@@ -22,7 +22,9 @@ services:
       retries: 3
       start_period: 10s
     networks:
-      - devops-network
+      devops-network:
+        aliases:
+          - app.local
     restart: unless-stopped
     volumes:
       - ./src:/app/src:ro

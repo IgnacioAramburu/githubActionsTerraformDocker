@@ -122,6 +122,35 @@ resource "aws_route_table_association" "a" {
   route_table_id = aws_route_table.rt.id
 }
 
+# --- Service Discovery para integración interna ---
+resource "aws_service_discovery_private_dns_namespace" "main" {
+  name        = "local"
+  description = "Namespace para comunicacion interna entre App, Prometheus y Grafana"
+  vpc         = aws_vpc.main.id
+}
+
+resource "aws_service_discovery_service" "app" {
+  name = "app"
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+  }
+}
+
+resource "aws_service_discovery_service" "prometheus" {
+  name = "prometheus"
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+  }
+}
+
 # ECS Cluster
 resource "aws_ecs_cluster" "main" {
   name = "${var.app_name}-cluster"
@@ -282,6 +311,10 @@ resource "aws_ecs_service" "main" {
     assign_public_ip = true
   }
 
+  service_registries {
+    registry_arn = aws_service_discovery_service.app.arn
+  }
+
   load_balancer {
     target_group_arn = aws_lb_target_group.app.arn
     container_name   = var.app_name
@@ -302,6 +335,11 @@ resource "aws_ecs_service" "prometheus" {
     subnets          = aws_subnet.public[*].id
     assign_public_ip = true
   }
+
+  service_registries {
+    registry_arn = aws_service_discovery_service.prometheus.arn
+  }
+
   load_balancer {
     target_group_arn = aws_lb_target_group.prometheus.arn
     container_name   = "prometheus"

@@ -74,6 +74,15 @@ http_requests_total
 # Requests por ruta
 sum by (route) (rate(http_requests_total[5m]))
 
+#### Análisis Histórico (24 Horas)
+```promql
+# Total de llamadas en el último día
+sum(increase(http_requests_total[24h]))
+
+# Desglose de errores (4xx y 5xx) del último día
+sum by (status_code) (increase(http_requests_total{status_code=~"4..|5.."}[24h]))
+```
+
 # Errores
 http_requests_total{status_code=~"4|5"}
 

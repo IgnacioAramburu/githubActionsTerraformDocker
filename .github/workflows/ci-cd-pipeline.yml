@@ -190,6 +190,17 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build y push Prometheus Custom Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/Dockerfile.prometheus
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/devops-prometheus:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Build y push Grafana Custom Image
         uses: docker/build-push-action@v6
         with:

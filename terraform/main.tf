@@ -85,6 +85,12 @@ resource "aws_ecr_repository" "grafana" {
   force_delete         = true
 }
 
+resource "aws_ecr_repository" "prometheus" {
+  name                 = "devops-prometheus"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+}
+
 # Red Básica (VPC y Subnets)
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
@@ -191,7 +197,7 @@ resource "aws_ecs_task_definition" "prometheus" {
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   container_definitions = jsonencode([{
     name  = "prometheus"
-    image = "prom/prometheus:latest"
+    image = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/devops-prometheus:latest"
     portMappings = [{
       containerPort = 9090
       hostPort      = 9090

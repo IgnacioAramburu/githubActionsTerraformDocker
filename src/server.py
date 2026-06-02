@@ -181,6 +181,8 @@ async def startup_event():
     # Inicializar series temporales para evitar "Empty query result"
     http_request_counter.labels(method="GET", route="/health", status_code=200)
     http_request_counter.labels(method="GET", route="/api/info", status_code=200)
+    http_request_counter.labels(method="GET", route="/health", status_code=200).inc(0)
+    http_request_counter.labels(method="GET", route="/api/info", status_code=200).inc(0)
 
     logger.info("✓ Aplicación iniciada")
     logger.info("✓ Métricas disponibles en /metrics")

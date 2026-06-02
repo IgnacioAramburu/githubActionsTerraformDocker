@@ -1,6 +1,16 @@
 FROM grafana/grafana:latest
 
-# Copiar toda la estructura de provisioning de una sola vez
-COPY monitoring/grafana-provisioning/ /etc/grafana/provisioning/
+# Crear carpetas necesarias
+USER root
+RUN mkdir -p /etc/grafana/provisioning/dashboards/definitions
+
+# Copiar configuraciones y asegurar permisos para el usuario grafana (472)
+COPY monitoring/grafana-provisioning/datasources/ /etc/grafana/provisioning/datasources/
+COPY monitoring/grafana-provisioning/dashboards/dashboard-config.yaml /etc/grafana/provisioning/dashboards/
+COPY monitoring/grafana-provisioning/dashboards/*.json /etc/grafana/provisioning/dashboards/definitions/
+
+RUN chown -R grafana:grafana /etc/grafana/provisioning/
+
+USER grafana
 
 EXPOSE 3000

@@ -5,9 +5,11 @@ datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
+    uid: prometheus_ds_aws
     # Endpoint interno en AWS ECS vía Service Discovery
     url: http://prometheus.local:9090
-    jsonData:
-      httpMethod: POST
+    basicAuth: false
     isDefault: true
     editable: true
+    jsonData:
+      httpMethod: POST

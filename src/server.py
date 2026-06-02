@@ -92,7 +92,7 @@ async def metrics_middleware(request, call_next):
 # Rutas API
 @app.get("/")
 async def root():
-    """Ruta principal - Health check"""
+    """Ruta principal - Health check1"""
     return {
         "message": "DevOps Pipeline - GitHub Actions + Terraform + Docker",
         "status": "healthy",

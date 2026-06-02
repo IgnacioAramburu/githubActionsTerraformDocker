@@ -167,20 +167,28 @@ Dashboards disponibles:
 - ✅ Codecov integration (Upload)
 - ⏱️ ~3 minutos
 
-### Job 3: Generate SBOM
+### Job 3: Prepare Infrastructure (ECR)
+- ✅ Terraform Apply selectivo (Targets ECR)
+- ✅ Asegura la existencia de repositorios antes del Build
+
+### Job 4: Generate SBOM
 - ✅ CycloneDX SBOM generation
 - ✅ Exportación de `dependencies.txt`
 - ⏱️ ~1 minuto
 
-### Job 4: Build Docker Image
+### Job 5: Build Docker Image
 - ✅ Multi-stage docker build
 - ✅ Push a Amazon ECR
-- ✅ Trivy vulnerability scan (SARIF report)
+- ✅ Trivy vulnerability scan (App, Prometheus, Grafana)
 - ⏱️ ~5-10 minutos
 
-### Job 5: Deploy
+### Job 6: Deploy
 - ✅ Terraform Apply (Infraestructura AWS)
-- ✅ Verificación de Health Check en ALB
+- ✅ Verificación de Health Check en ALB (App:80, Prom:9090, Grafana:3001)
+
+### Job 7: Summary
+- ✅ Reporte final de ejecución
+- ✅ Creación automática de GitHub Issues en caso de fallo
 
 ## 🔒 Seguridad
 
@@ -200,9 +208,9 @@ Dashboards disponibles:
    - Generación automática en pipeline
 
 4. **Análisis de Imágenes Docker**
-   - Trivy: Escaneo de vulnerabilidades
-   - Genera reportes SARIF
-   - Integración con GitHub Security
+   - Trivy: Escaneo de vulnerabilidades en las imágenes de **App, Prometheus y Grafana**.
+   - Generación de reportes SARIF individuales para cada imagen.
+   - Integración con la pestaña de Seguridad de GitHub.
 
 5. **Buenas Prácticas**
    - User no-root en Dockerfile
@@ -468,7 +476,7 @@ MIT License - Ver LICENSE file para más detalles.
 
 - **Nombre**: GitHub Actions + Terraform + Docker (Local CI/CD)
 - **Versión**: 1.0.0
-- **Fecha**: May 2026
+- **Fecha**: Junio 2026
 
 ---
 

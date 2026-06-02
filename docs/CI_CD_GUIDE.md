@@ -6,8 +6,10 @@ El proyecto usa **GitHub Actions** para automatizar:
 1. Linting de código (PyLint)
 2. Ejecución de tests (pytest)
 3. Generación de SBOM
-4. Build y push de Docker image a ECR
-5. Deploy con Terraform a AWS ECS
+4. Preparación de ECR (Infrastructure)
+5. Build y push de imágenes (App, Prometheus, Grafana)
+6. Deploy con Terraform a AWS ECS
+7. Resumen y notificación de estado
 
 ## 🔄 Flujo de Ejecución
 
@@ -27,7 +29,7 @@ pylint src/
 - Valida sintaxis y estándares Python
 - Estado: ⚠️ `continue-on-error: true` (no bloquea)
 
-#### 2. **Tests** (2 min)
+#### 2. **Tests & Coverage** (2 min)
 ```bash
 pytest src/test_server.py -v
 ```

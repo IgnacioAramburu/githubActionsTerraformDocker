@@ -14,7 +14,6 @@
       "datasource": { "type": "prometheus", "uid": "prometheus_ds_aws" },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total[5m])) by (route, method)",
           "expr": "sum(rate(http_requests_total{route=~\"/health|/metrics|/info|/echo|/service-status\"}[5m])) by (route, method)",
           "refId": "A"
         }

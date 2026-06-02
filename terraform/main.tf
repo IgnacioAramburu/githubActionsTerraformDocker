@@ -110,6 +110,7 @@ resource "aws_vpc" "main" {
 
   tags = {
     Name = "${var.app_name}-vpc"
+    AccountId = var.aws_account_id
   }
 }
 

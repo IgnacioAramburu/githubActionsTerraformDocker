@@ -201,12 +201,20 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Scan imagen con Trivy (Analisis de vulnerabilidades)
-        uses: aquasecurity/trivy-action@master
+      - name: Scan App Image con Trivy
+        uses: aquasecurity/trivy-action@v0.20.0
         with:
           image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
           format: 'sarif'
-          output: 'trivy-results.sarif'
+          output: 'trivy-app-results.sarif'
+        continue-on-error: true
+
+      - name: Scan Grafana Image con Trivy
+        uses: aquasecurity/trivy-action@v0.20.0
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/devops-grafana:latest
+          format: 'sarif'
+          output: 'trivy-grafana-results.sarif'
         continue-on-error: true
 
       - name: Upload Trivy resultados
@@ -214,7 +222,8 @@ jobs:
         #Nos aseguramos de que intente de subir el reporte aunque Trivy falle
         if: always()
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: '.'
+          # Esto subirá todos los archivos .sarif encontrados en el directorio
 
   # Job: Despliegue en AWS ECS
   deploy:
@@ -273,18 +282,21 @@ jobs:
 
       - name: Verify Deployment
         run: |
-          ALB_URL=$(cd terraform && terraform output -raw app_url)
-          echo "Verificando despliegue en: $ALB_URL"
-          sleep 30
-          curl -f "$ALB_URL/health" || echo "La aplicación aún no responde en el ALB"
+          ALB_DNS=$(cd terraform && terraform output -raw app_url)
+          echo "Verificando dominio compartido: $ALB_DNS"
           
-          echo "Verificando acceso a Prometheus UI..."
-          PROMETHEUS_URL=$(cd terraform && terraform output -raw prometheus_url || echo "$ALB_URL:9090")
-          curl -sI "$PROMETHEUS_URL" | grep "HTTP/1.1 200" || echo "Prometheus UI no accesible externamente"
+          echo "Esperando a que los servicios propaguen en el ALB (90s)..."
+          sleep 90
+          
+          echo "1. Validando App (Puerto 80)..."
+          curl -fL "$ALB_DNS/health" || exit 1
+          
+          echo "2. Validando Prometheus (Puerto 9090)..."
+          curl -fL "$ALB_DNS:9090/-/healthy" || exit 1
 
-          echo "Verificando acceso a Grafana UI..."
-          GRAFANA_URL=$(cd terraform && terraform output -raw grafana_url || echo "$ALB_URL:3001")
-          curl -sI "$GRAFANA_URL" | grep "HTTP/1.1 200" || echo "Grafana UI no accesible externamente"
+          echo "3. Validando Grafana (Puerto 3001)..."
+          # Grafana puede devolver 200 o 302 (redirect al login), ambos son señal de vida
+          curl -sIL "$ALB_DNS:3001/api/health" | grep -E "HTTP/1.1 (200|302)" || exit 1
 
       - name: Generar reporte de despliegue
         if: success()

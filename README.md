@@ -384,6 +384,7 @@ chmod +x security/*.sh
 > - `AmazonEC2ContainerRegistryFullAccess`
 > - `AmazonVPCFullAccess`
 > - `AmazonS3FullAccess` (para el backend de Terraform)
+> - `AWSCloudMapFullAccess` (para Service Discovery interno)
 > - `IAMFullAccess` (para crear los roles de ejecución de ECS)
 
 2. Configurar ramas protegidas:

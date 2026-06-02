@@ -138,7 +138,7 @@
       "pluginVersion": "8.2.0",
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(http_request_duration_ms_bucket[5m]))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket{route=~\"/health|/metrics|/api/info|/api/echo|/api/status/service-status\"}[5m])) by (le))",
           "interval": "",
           "legendFormat": "P95 Latency",
           "refId": "A"
@@ -273,7 +273,7 @@
       "pluginVersion": "8.2.0",
       "targets": [
         {
-          "expr": "sum by (status_code) (rate(http_requests_total[5m]))",
+          "expr": "sum by (status_code) (rate(http_requests_total{route=~\"/health|/metrics|/api/info|/api/echo|/api/status/service-status\"}[5m]))",
           "interval": "",
           "legendFormat": "Status {{status_code}}",
           "refId": "A"

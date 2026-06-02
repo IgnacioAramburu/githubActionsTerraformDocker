@@ -14,7 +14,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus_ds_aws" },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total{route=~\"/health|/metrics|/info|/echo|/service-status\"}[5m])) by (route, method)",
+          "expr": "sum(rate(http_requests_total{route=~\"/health|/metrics|/api/info|/api/echo|/api/status/service-status\"}[5m])) by (route, method)",
           "refId": "A"
         }
       ]
@@ -26,7 +26,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus_ds_aws" },
       "targets": [
         {
-          "expr": "sum by (status_code) (http_requests_total)",
+          "expr": "sum by (status_code) (http_requests_total{route=~\"/health|/metrics|/api/info|/api/echo|/api/status/service-status\"})",
           "refId": "A"
         }
       ]
@@ -50,7 +50,7 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket{route=~\"/health|/metrics|/api/info|/api/echo|/api/status/service-status\"}[5m])) by (le))",
           "refId": "A"
         }
       ]

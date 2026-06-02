@@ -48,7 +48,7 @@
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus_ds_aws" },
       "targets": [
-        { "expr": "sum(increase(http_requests_total[24h]))", "refId": "A" }
+        { "expr": "sum(increase(http_requests_total{route=~\"/health|/metrics|/api/info|/api/echo|/api/status/service-status\"}[24h]))", "refId": "A" }
       ],
       "fieldConfig": {
         "defaults": { "color": { "mode": "palette-classic" }, "unit": "req" }
@@ -61,7 +61,7 @@
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus_ds_aws" },
       "targets": [
-        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[5m])) by (le))", "refId": "A" }
+        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket{route=~\"/health|/metrics|/api/info|/api/echo|/api/status/service-status\"}[5m])) by (le))", "refId": "A" }
       ],
       "fieldConfig": {
         "defaults": {
@@ -83,7 +83,7 @@
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus_ds_aws" },
       "targets": [
-        { "expr": "sum(rate(http_requests_total{status_code=~\"4..|5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100", "refId": "A" }
+        { "expr": "sum(rate(http_requests_total{status_code=~\"4..|5..\", route=~\"/health|/metrics|/api/info|/api/echo|/api/status/service-status\"}[5m])) / sum(rate(http_requests_total{route=~\"/health|/metrics|/api/info|/api/echo|/api/status/service-status\"}[5m])) * 100", "refId": "A" }
       ],
       "fieldConfig": {
         "defaults": {
@@ -105,7 +105,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus_ds_aws" },
       "targets": [
-        { "expr": "sum by (route, method) (rate(http_requests_total[5m]))", "legendFormat": "{{method}} {{route}}", "refId": "A" }
+        { "expr": "sum by (route, method) (rate(http_requests_total{route=~\"/health|/metrics|/api/info|/api/echo|/api/status/service-status\"}[5m]))", "legendFormat": "{{method}} {{route}}", "refId": "A" }
       ],
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } }
     },
@@ -115,7 +115,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus_ds_aws" },
       "targets": [
-        { "expr": "sum by (status_code) (http_requests_total)", "legendFormat": "Status {{status_code}}", "refId": "A" }
+        { "expr": "sum by (status_code) (http_requests_total{route=~\"/health|/metrics|/api/info|/api/echo|/api/status/service-status\"})", "legendFormat": "Status {{status_code}}", "refId": "A" }
       ],
       "options": { "legend": { "displayMode": "list", "placement": "right" } }
     }

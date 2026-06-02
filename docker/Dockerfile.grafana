@@ -9,8 +9,8 @@ COPY monitoring/grafana-provisioning/datasources/ /etc/grafana/provisioning/data
 COPY monitoring/grafana-provisioning/dashboards/dashboard-config.yaml /etc/grafana/provisioning/dashboards/
 COPY monitoring/grafana-provisioning/dashboards/*.json /etc/grafana/provisioning/dashboards/definitions/
 
-RUN chown -R grafana:grafana /etc/grafana/provisioning/
+RUN chown -R 472:472 /etc/grafana/provisioning/
 
-USER grafana
+USER 472
 
 EXPOSE 3000

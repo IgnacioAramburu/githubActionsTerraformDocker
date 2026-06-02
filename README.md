@@ -1,6 +1,8 @@
 # DevOps Pipeline: GitHub Actions + Terraform + Docker (Python)
 
-[![CI/CD Pipeline](https://github.com/your-repo/actions/workflows/ci-cd-pipeline.yml/badge.svg)](https://github.com/your-repo/actions/workflows/ci-cd-pipeline.yml)
+[![CI/CD Pipeline](https://github.com/IgnacioAramburu/githubActionsTerraformDocker/actions/workflows/ci-cd-pipeline.yml/badge.svg)](https://github.com/IgnacioAramburu/githubActionsTerraformDocker/actions/workflows/ci-cd-pipeline.yml)
+
+**Repositorio GitHub:** [https://github.com/IgnacioAramburu/githubActionsTerraformDocker](https://github.com/IgnacioAramburu/githubActionsTerraformDocker)
 
 ## 📋 Descripción
 
@@ -81,7 +83,7 @@ newgrp docker
 
 ### 1. Clonar el repositorio
 ```bash
-git clone <repository-url>
+git clone https://github.com/IgnacioAramburu/githubActionsTerraformDocker.git
 cd GitHub Actions+Terraform+Docker
 ```
 

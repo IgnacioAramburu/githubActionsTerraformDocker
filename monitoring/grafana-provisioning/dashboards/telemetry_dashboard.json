@@ -24,7 +24,7 @@
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus_ds_aws" },
       "targets": [
-        { "expr": "up{job=\"devops-app\"}", "refId": "A" }
+        { "expr": "max(up{job=\"devops-app\"})", "refId": "A" }
       ],
       "fieldConfig": {
         "defaults": {

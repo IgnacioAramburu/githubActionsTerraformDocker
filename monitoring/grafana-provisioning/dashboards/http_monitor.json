@@ -11,6 +11,7 @@
       "title": "HTTP Requests Total (RPS)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus_ds_aws" },
       "targets": [
         {
           "expr": "sum(rate(http_requests_total[5m])) by (route, method)",
@@ -22,6 +23,7 @@
       "title": "HTTP Status Codes",
       "type": "bargauge",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus_ds_aws" },
       "targets": [
         {
           "expr": "sum by (status_code) (http_requests_total)",
@@ -33,6 +35,7 @@
       "title": "Latencia P95 (ms)",
       "type": "gauge",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus_ds_aws" },
       "fieldConfig": {
         "defaults": {
           "unit": "ms",

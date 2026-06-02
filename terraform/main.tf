@@ -109,7 +109,7 @@ resource "aws_vpc" "main" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "${var.app_name}-vpc"
+    Name      = "${var.app_name}-vpc"
     AccountId = var.aws_account_id
   }
 }
@@ -373,6 +373,7 @@ resource "aws_ecs_service" "grafana" {
   desired_count                     = 1
   launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 60
+
   network_configuration {
     security_groups  = [aws_security_group.ecs_tasks.id]
     subnets          = aws_subnet.public[*].id

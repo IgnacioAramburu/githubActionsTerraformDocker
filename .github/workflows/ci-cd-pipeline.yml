@@ -217,13 +217,19 @@ jobs:
           output: 'trivy-grafana-results.sarif'
         continue-on-error: true
 
-      - name: Upload Trivy resultados
-        uses: github/codeql-action/upload-sarif@v3
-        #Nos aseguramos de que intente de subir el reporte aunque Trivy falle
+      - name: Upload Trivy App results
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
-          sarif_file: '.'
-          # Esto subirá todos los archivos .sarif encontrados en el directorio
+          sarif_file: 'trivy-app-results.sarif'
+          category: 'app-image'
+
+      - name: Upload Trivy Grafana results
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: 'trivy-grafana-results.sarif'
+          category: 'grafana-image'
 
   # Job: Despliegue en AWS ECS
   deploy:

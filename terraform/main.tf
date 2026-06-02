@@ -41,6 +41,18 @@ variable "docker_image_name" {
   default     = ""
 }
 
+variable "prometheus_image" {
+  description = "URI de la imagen de Prometheus"
+  type        = string
+  default     = ""
+}
+
+variable "grafana_image" {
+  description = "URI de la imagen de Grafana"
+  type        = string
+  default     = ""
+}
+
 variable "container_port" {
   description = "Puerto en el contenedor"
   type        = number
@@ -197,7 +209,7 @@ resource "aws_ecs_task_definition" "prometheus" {
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   container_definitions = jsonencode([{
     name  = "prometheus"
-    image = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/devops-prometheus:latest"
+    image = var.prometheus_image
     portMappings = [{
       containerPort = 9090
       hostPort      = 9090
@@ -215,7 +227,7 @@ resource "aws_ecs_task_definition" "grafana" {
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   container_definitions = jsonencode([{
     name  = "grafana"
-    image = "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/devops-grafana:latest"
+    image = var.grafana_image
     portMappings = [{
       containerPort = 3000
       hostPort      = 3000

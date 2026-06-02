@@ -47,6 +47,8 @@ jobs:
             -target=aws_ecr_repository.prometheus \
             -target=aws_ecr_repository.grafana \
             -var="docker_image_name=initial" \
+            -var="prometheus_image=initial" \
+            -var="grafana_image=initial" \
             -var="aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
             -var="aws_region=${{ env.AWS_REGION }}"
 
@@ -199,6 +201,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/devops-prometheus:latest
+            ${{ steps.login-ecr.outputs.registry }}/devops-prometheus:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -210,6 +213,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/devops-grafana:latest
+            ${{ steps.login-ecr.outputs.registry }}/devops-grafana:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -305,6 +309,8 @@ jobs:
         run: |
           terraform plan \
             -var="docker_image_name=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}" \
+            -var="prometheus_image=${{ steps.login-ecr.outputs.registry }}/devops-prometheus:${{ github.sha }}" \
+            -var="grafana_image=${{ steps.login-ecr.outputs.registry }}/devops-grafana:${{ github.sha }}" \
             -var="aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
             -var="aws_region=${{ env.AWS_REGION }}" \
             -out=tfplan

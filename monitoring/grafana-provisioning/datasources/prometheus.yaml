@@ -7,5 +7,7 @@ datasources:
     access: proxy
     # Endpoint interno en AWS ECS vía Service Discovery
     url: http://prometheus.local:9090
+    jsonData:
+      httpMethod: POST
     isDefault: true
     editable: true

@@ -304,7 +304,7 @@ jobs:
         working-directory: ./terraform
         run: |
           terraform plan \
-            -var="docker_image_name=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest" \
+            -var="docker_image_name=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}" \
             -var="aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
             -var="aws_region=${{ env.AWS_REGION }}" \
             -out=tfplan

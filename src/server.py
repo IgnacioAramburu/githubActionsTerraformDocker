@@ -57,6 +57,10 @@ app = FastAPI(
 @app.middleware("http")
 async def metrics_middleware(request, call_next):
     """Middleware para recolectar métricas de Prometheus"""
+    # Excluir la propia ruta de métricas para evitar ruido y recursión
+    if request.url.path == "/metrics":
+        return await call_next(request)
+
     start_time = time.time()
 
     try:

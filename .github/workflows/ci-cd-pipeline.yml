@@ -44,6 +44,7 @@ jobs:
         run: |
           terraform apply -auto-approve \
             -target=aws_ecr_repository.app \
+            -target=aws_ecr_repository.prometheus \
             -target=aws_ecr_repository.grafana \
             -var="docker_image_name=initial" \
             -var="aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
@@ -220,6 +221,14 @@ jobs:
           output: 'trivy-app-results.sarif'
         continue-on-error: true
 
+      - name: Scan Prometheus Image con Trivy
+        uses: aquasecurity/trivy-action@v0.20.0
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/devops-prometheus:latest
+          format: 'sarif'
+          output: 'trivy-prometheus-results.sarif'
+        continue-on-error: true
+
       - name: Scan Grafana Image con Trivy
         uses: aquasecurity/trivy-action@v0.20.0
         with:
@@ -234,6 +243,13 @@ jobs:
         with:
           sarif_file: 'trivy-app-results.sarif'
           category: 'app-image'
+
+      - name: Upload Trivy Prometheus results
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: 'trivy-prometheus-results.sarif'
+          category: 'prometheus-image'
 
       - name: Upload Trivy Grafana results
         uses: github/codeql-action/upload-sarif@v4
